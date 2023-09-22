@@ -68,8 +68,18 @@ require("lazy").setup({
     { "toppair/peek.nvim",        build = "deno task --quiet build:fast" },
 
     -- Github Copilot setup
-    "zbirenbaum/copilot.lua",
-    "zbirenbaum/copilot-cmp",
+    {
+        "zbirenbaum/copilot.lua",
+        cmd = "Copilot",
+        event = "InsertEnter",
+    },
+
+    {
+        "zbirenbaum/copilot-cmp",
+        config = function()
+            require("copilot_cmp").setup()
+        end
+    },
 
     -- icons for LSP
     "onsails/lspkind.nvim",
