@@ -3,7 +3,6 @@ require("lazy").setup({
     -- fuzzy finder
     {
         'nvim-telescope/telescope.nvim',
-        tag = '0.1.1',
         dependencies = { 'nvim-lua/plenary.nvim' }
     },
     "nvim-telescope/telescope-file-browser.nvim",
@@ -49,9 +48,20 @@ require("lazy").setup({
             { 'hrsh7th/nvim-cmp' },     -- Required
             { 'hrsh7th/cmp-nvim-lsp' }, -- Required
             { 'hrsh7th/cmp-nvim-lua' },
-            { 'L3MON4D3/LuaSnip' },     -- Required
 
         }
+    },
+    {
+        "L3MON4D3/LuaSnip",
+        -- follow latest release.
+        version = "v2.*", -- Replace <CurrentMajor> by the latest released major (first number of latest release)
+        -- install jsregexp (optional!).
+        build = "make install_jsregexp",
+
+        dependencies = {
+            "rafamadriz/friendly-snippets",
+            "saadparwaiz1/cmp_luasnip",
+        },
     },
     "lukas-reineke/lsp-format.nvim",
 
@@ -79,6 +89,14 @@ require("lazy").setup({
         config = function()
             require("copilot_cmp").setup()
         end
+    },
+    -- Use your favorite package manager to install, for example in lazy.nvim
+    {
+        "sourcegraph/sg.nvim",
+        dependencies = { "nvim-lua/plenary.nvim" },
+
+        -- If you have a recent version of lazy.nvim, you don't need to add this!
+        build = "nvim -l build/init.lua",
     },
 
     -- icons for LSP
@@ -114,9 +132,12 @@ require("lazy").setup({
     },
     "tpope/vim-dadbod",
     'kristijanhusak/vim-dadbod-ui',
+
+
+    -- BEGIN LISP PLUGINS
+    --[[
     {
         "Olical/conjure",
-        ft = { "clojure" }, -- etc
         -- [Optional] cmp-conjure for cmp
         dependencies = {
             {
@@ -131,18 +152,43 @@ require("lazy").setup({
             -- Set configuration options here
         end,
     },
-    "LunarWatcher/auto-pairs",
+    --]]
+    "gpanders/nvim-parinfer",
     "tpope/vim-surround",
 
-    "guns/vim-sexp",
-    "tpope/vim-sexp-mappings-for-regular-people",
+    --"guns/vim-sexp",
+    --"tpope/vim-sexp-mappings-for-regular-people",
+
+    "p00f/nvim-ts-rainbow",
+    -- END LISP PLUGINS
+
 
     "tpope/vim-repeat",
+    "cohama/lexima.vim",
 
     { "CRAG666/code_runner.nvim", config = true },
     "klen/nvim-config-local",
 
-    "jbyuki/instant.nvim",
+    {
+        'kevinhwang91/nvim-ufo',
+        dependencies = {
+            'kevinhwang91/promise-async',
+        },
+    },
+    {
+        "andrewferrier/wrapping.nvim",
+        config = function()
+            require("wrapping").setup()
+        end
+    },
+    {
+        'stevearc/oil.nvim',
+        opts = {},
+        -- Optional dependencies
+        dependencies = { "nvim-tree/nvim-web-devicons" },
+    },
+
+    "lervag/vimtex",
 }, {
 
 })

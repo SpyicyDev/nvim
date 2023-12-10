@@ -28,3 +28,5 @@ vim.opt.scrolloff = 15
 vim.opt.isfname:append("@-@")
 
 vim.opt.updatetime = 50
+
+vim.cmd [[ set clipboard+=unnamedplus ]]

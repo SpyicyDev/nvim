@@ -41,15 +41,13 @@ end)
 -- (Optional) Configure lua language server for neovim
 require('lspconfig').lua_ls.setup(lsp.nvim_lua_ls())
 
-MY_FQBN = "arduino:avr:mega"
-require('lspconfig').arduino_language_server.setup {
-    cmd = {
-        "arduino-language-server",
-        "-clangd", "/usr/bin/clangd",
-        "-cli", "/usr/local/bin/arduino-cli",
-        "-cli-config", "/Users/mackhaymond/Library/Arduino15/arduino-cli.yaml",
-        "-fqbn", MY_FQBN
-    }
+require 'lspconfig'.julials.setup {
+    on_new_config = function(new_config, _)
+        local julia = vim.fn.expand("~/.julia/environments/nvim-lspconfig/bin/julia")
+        if require 'lspconfig'.util.path.is_file(julia) then
+            new_config.cmd[1] = julia
+        end
+    end
 }
 
 lsp.ensure_installed({
@@ -60,7 +58,6 @@ lsp.ensure_installed({
     'gopls',
     'lua_ls',
     'ocamllsp',
-    'pylsp',
     'rust_analyzer',
     'tsserver',
 })
@@ -69,7 +66,19 @@ lsp.setup()
 
 -- Make sure you setup `cmp` after lsp-zero
 
+require("luasnip.loaders.from_vscode").lazy_load()
+
+
+
 local cmp = require('cmp')
+local luasnip = require('luasnip')
+
+local has_words_before = function()
+    unpack = unpack or table.unpack
+    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+    return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+end
+
 
 cmp.setup({
     sources = {
@@ -77,12 +86,18 @@ cmp.setup({
         { name = 'copilot' },
         { name = 'nvim_lsp' },
         { name = 'nvim_lua' },
+        { name = 'conjure' },
+        { name = 'nvlime' },
         { name = 'buffer',  keyword_length = 3 },
         { name = 'luasnip', keyword_length = 2 },
     },
     formatting = {
         fields = { 'abbr', 'kind', 'menu' },
         format = require('lspkind').cmp_format({
+            menu = {
+                nvim_lsp = "[LSP]",
+                conjure = "[Conjure]",
+            },
             mode = 'symbol_text',
             maxwidth = 50,         -- prevent the popup from showing more than provided characters
             ellipsis_char = '...', -- when popup menu exceed maxwidth, the truncated part would show ellipsis_char instead
@@ -93,6 +108,30 @@ cmp.setup({
         ['<CR>'] = cmp.mapping.confirm({
             behavior = cmp.ConfirmBehavior.replace,
             select = false }),
+        ["<Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.select_next_item()
+            elseif luasnip.expand_or_jumpable() then
+                luasnip.expand_or_jump()
+            elseif has_words_before() then
+                cmp.complete()
+            else
+                fallback()
+            end
+        end, { "i", "s" }),
+
+
+        ["<S-Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.select_prev_item()
+            elseif luasnip.jumpable(-1) then
+                luasnip.jump(-1)
+            else
+                fallback()
+            end
+        end, { "i", "s" }),
+
+        --[[
         ['<Down>'] = cmp.mapping(function(fallback)
             cmp.close()
             fallback()
@@ -101,10 +140,16 @@ cmp.setup({
             cmp.close()
             fallback()
         end, { "i" }),
+        --]]
 
     },
     window = {
         completion = cmp.config.window.bordered(),
         documentation = cmp.config.window.bordered(),
-    }
+    },
+    snippet = {
+        expand = function(args)
+            require('luasnip').lsp_expand(args.body)
+        end,
+    },
 })

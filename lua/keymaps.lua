@@ -1,6 +1,6 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
-vim.keymap.set("n", "<leader>pv", "<cmd>Neotree position=current toggle=true reveal=true<cr>")
+-- vim.keymap.set("n", "<leader>pv", "<cmd>Neotree position=current toggle=true reveal=true<cr>")
 
 vim.keymap.set("n", "<leader><leader>", "<cmd>w<cr>")
 
@@ -22,4 +22,4 @@ vim.keymap.set({ "n", "v" }, "<leader>d", [["_d]])
 
 vim.keymap.set("n", "Q", "<nop>")
 
-vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
+--vim.keymap.set("n", "<leader>ss", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])

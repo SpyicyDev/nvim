@@ -11,7 +11,7 @@ require('code_runner').setup({
 
     filetype = {
         python = [[
-        if test -f $dir/../pyproject.toml; then
+        if [ -f $dir/../pyproject.toml ] || [ -f $dir/pyproject.toml ]; then
             poetry run python3 $file
         else
             python3 $file
