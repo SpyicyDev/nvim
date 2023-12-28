@@ -30,27 +30,15 @@ require("lazy").setup({
     -- git
     "tpope/vim-fugitive",
 
-    -- LSP
-    {
-        'VonHeikemen/lsp-zero.nvim',
-        branch = 'v2.x',
-        dependencies = {
-            -- LSP Support
-            { 'neovim/nvim-lspconfig' }, -- Required
-            {
-                -- Optional
-                'williamboman/mason.nvim',
-                build = ":MasonUpdate",
-            },
-            { 'williamboman/mason-lspconfig.nvim' }, -- Optional
+    -- ##### LSP #####
+    { 'neovim/nvim-lspconfig' },             -- Required
+    { 'williamboman/mason.nvim' },
+    { 'williamboman/mason-lspconfig.nvim' }, -- Optional
 
-            -- Autocompletion
-            { 'hrsh7th/nvim-cmp' },     -- Required
-            { 'hrsh7th/cmp-nvim-lsp' }, -- Required
-            { 'hrsh7th/cmp-nvim-lua' },
-
-        }
-    },
+    -- Autocompletion
+    { 'hrsh7th/nvim-cmp' },     -- Required
+    { 'hrsh7th/cmp-nvim-lsp' }, -- Required
+    { 'hrsh7th/cmp-nvim-lua' },
     {
         "L3MON4D3/LuaSnip",
         -- follow latest release.
@@ -63,7 +51,7 @@ require("lazy").setup({
             "saadparwaiz1/cmp_luasnip",
         },
     },
-    "lukas-reineke/lsp-format.nvim",
+    -- ##### END LSP #####
 
     -- tmux vim integration
     "christoomey/vim-tmux-navigator",
@@ -178,7 +166,9 @@ require("lazy").setup({
     {
         "andrewferrier/wrapping.nvim",
         config = function()
-            require("wrapping").setup()
+            require("wrapping").setup({
+                softener = { tex = true },
+            })
         end
     },
     {
