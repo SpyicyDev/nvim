@@ -1,7 +1,9 @@
+-- diagnostic keybinds
 vim.keymap.set('n', 'gl', '<cmd>lua vim.diagnostic.open_float()<cr>')
 vim.keymap.set('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<cr>')
 vim.keymap.set('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<cr>')
 
+-- LSP keybinds, sets when LSP attaches
 vim.api.nvim_create_autocmd('LspAttach', {
     desc = 'LSP actions',
     callback = function(event)
@@ -21,8 +23,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
     end
 })
 
+-- setup each LSP in mason
 local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
-
 local default_setup = function(server)
     require('lspconfig')[server].setup({
         capabilities = lsp_capabilities,
@@ -37,6 +39,7 @@ require('mason-lspconfig').setup({
     },
 })
 
+-- specific config for julia
 require 'lspconfig'.julials.setup {
     on_new_config = function(new_config, _)
         local julia = vim.fn.expand("~/.julia/environments/nvim-lspconfig/bin/julia")
@@ -46,21 +49,20 @@ require 'lspconfig'.julials.setup {
     end
 }
 
+-- null-ls setup
 require("mason-null-ls").setup({
-    ensure_installed = {
-        -- Opt to list sources here, when available in mason.
-    },
+    ensure_installed = {},
     automatic_installation = false,
     handlers = {},
 })
 require("null-ls").setup({
-    sources = {
-        -- Anything not supported by mason.
-    }
+    sources = {}
 })
 
+-- snippets i think?
 require("luasnip.loaders.from_vscode").lazy_load()
 
+-- cmp setup
 local cmp = require('cmp')
 local luasnip = require('luasnip')
 
