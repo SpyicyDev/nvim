@@ -56,7 +56,6 @@ require("lazy").setup({
         "jay-babu/mason-null-ls.nvim",
         event = { "BufReadPre", "BufNewFile" },
     },
-    "lukas-reineke/lsp-format.nvim",
     -- ##### END LSP #####
 
     -- tmux vim integration

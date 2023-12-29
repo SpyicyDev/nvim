@@ -23,15 +23,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
 
-require("lsp-format").setup {}
 local default_setup = function(server)
     require('lspconfig')[server].setup({
         capabilities = lsp_capabilities,
-        on_attach = require("lsp-format").on_attach,
     })
 end
-
-
 
 require('mason').setup({})
 require('mason-lspconfig').setup({
