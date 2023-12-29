@@ -51,6 +51,12 @@ require("lazy").setup({
             "saadparwaiz1/cmp_luasnip",
         },
     },
+    "nvimtools/none-ls.nvim",
+    {
+        "jay-babu/mason-null-ls.nvim",
+        event = { "BufReadPre", "BufNewFile" },
+    },
+    "lukas-reineke/lsp-format.nvim",
     -- ##### END LSP #####
 
     -- tmux vim integration

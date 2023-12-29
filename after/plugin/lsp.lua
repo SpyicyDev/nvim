@@ -23,11 +23,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
 
+require("lsp-format").setup {}
 local default_setup = function(server)
     require('lspconfig')[server].setup({
         capabilities = lsp_capabilities,
+        on_attach = require("lsp-format").on_attach,
     })
 end
+
+
 
 require('mason').setup({})
 require('mason-lspconfig').setup({
@@ -45,6 +49,19 @@ require 'lspconfig'.julials.setup {
         end
     end
 }
+
+require("mason-null-ls").setup({
+    ensure_installed = {
+        -- Opt to list sources here, when available in mason.
+    },
+    automatic_installation = false,
+    handlers = {},
+})
+require("null-ls").setup({
+    sources = {
+        -- Anything not supported by mason.
+    }
+})
 
 require("luasnip.loaders.from_vscode").lazy_load()
 
@@ -85,7 +102,8 @@ cmp.setup({
     mapping = {
         ['<CR>'] = cmp.mapping.confirm({
             behavior = cmp.ConfirmBehavior.replace,
-            select = false }),
+            select = false
+        }),
         ["<Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 cmp.select_next_item()
