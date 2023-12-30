@@ -3,6 +3,16 @@ vim.keymap.set('n', 'gl', '<cmd>lua vim.diagnostic.open_float()<cr>')
 vim.keymap.set('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<cr>')
 vim.keymap.set('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<cr>')
 
+-- diagnostic signs
+vim.fn.sign_define("DiagnosticSignError",
+    { text = " ", texthl = "DiagnosticSignError" })
+vim.fn.sign_define("DiagnosticSignWarn",
+    { text = " ", texthl = "DiagnosticSignWarn" })
+vim.fn.sign_define("DiagnosticSignInfo",
+    { text = " ", texthl = "DiagnosticSignInfo" })
+vim.fn.sign_define("DiagnosticSignHint",
+    { text = "", texthl = "DiagnosticSignHint" })
+
 -- LSP keybinds, sets when LSP attaches
 vim.api.nvim_create_autocmd('LspAttach', {
     desc = 'LSP actions',
@@ -25,6 +35,11 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
 -- setup each LSP in mason
 local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
+lsp_capabilities.textDocument.foldingRange = {
+    dynamicRegistration = false,
+    lineFoldingOnly = true
+}
+
 local default_setup = function(server)
     require('lspconfig')[server].setup({
         capabilities = lsp_capabilities,
@@ -36,6 +51,24 @@ require('mason-lspconfig').setup({
     ensure_installed = {},
     handlers = {
         default_setup,
+        lua_ls = function()
+            require('lspconfig').lua_ls.setup({
+                capabilities = lsp_capabilities,
+                settings = {
+                    Lua = {
+                        runtime = {
+                            version = 'LuaJIT'
+                        },
+                        diagnostics = {
+                            globals = { 'vim' },
+                        },
+                        workspace = {
+                            library = vim.api.nvim_get_runtime_file("lua", true),
+                        }
+                    }
+                }
+            })
+        end,
     },
 })
 
@@ -74,7 +107,7 @@ end
 
 
 cmp.setup({
-    sources = {
+    sources = cmp.config.sources({
         { name = 'path' },
         { name = 'copilot' },
         { name = 'nvim_lsp' },
@@ -83,7 +116,7 @@ cmp.setup({
         { name = 'nvlime' },
         { name = 'buffer',  keyword_length = 3 },
         { name = 'luasnip', keyword_length = 2 },
-    },
+    }),
     formatting = {
         fields = { 'abbr', 'kind', 'menu' },
         format = require('lspkind').cmp_format({
@@ -97,7 +130,7 @@ cmp.setup({
             symbol_map = { Copilot = "" },
         })
     },
-    mapping = {
+    mapping = cmp.mapping.preset.insert({
         ['<CR>'] = cmp.mapping.confirm({
             behavior = cmp.ConfirmBehavior.replace,
             select = false
@@ -124,7 +157,7 @@ cmp.setup({
                 fallback()
             end
         end, { "i", "s" }),
-    },
+    }),
     window = {
         completion = cmp.config.window.bordered(),
         documentation = cmp.config.window.bordered(),
@@ -135,3 +168,14 @@ cmp.setup({
         end,
     },
 })
+
+-- auto parentheses
+require('nvim-autopairs').setup({
+    enable_check_bracket_line = false
+})
+
+local cmp_autopairs = require('nvim-autopairs.completion.cmp')
+cmp.event:on(
+    'confirm_done',
+    cmp_autopairs.on_confirm_done()
+)

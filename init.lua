@@ -1,6 +1,5 @@
--- import keymaps
+-- import keymaps and general settings
 require('keymaps')
-
 require('set')
 
 -- bootstrap lazy.nvim
@@ -16,26 +15,10 @@ if not vim.loop.fs_stat(lazypath) then
     })
 end
 vim.opt.rtp:prepend(lazypath)
-
-
-vim.g.nvlime_config = {
-    implementation = "ros",
-    cmp = {
-        enabled = true,
-    },
-}
-vim.api.nvim_exec([[
-let g:nvlime_cl_impl = "ros"
-function! NvlimeBuildServerCommandFor_ros(nvlime_loader, nvlime_eval)
-    return ["ros", "run",
-                \ "--load", a:nvlime_loader,
-                \ "--eval", a:nvlime_eval]
-endfunction
-
-]], false)
-
--- import plugins
-require('plugins')
+require("lazy").setup("plugins")
 
 -- set colorscheme
 vim.cmd.colorscheme "catppuccin-mocha"
+
+-- initialize LSP
+require('lsp_setup')
