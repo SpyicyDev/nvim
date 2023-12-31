@@ -3,9 +3,9 @@ return {
     {
         "theprimeagen/harpoon",
         opts = {
-                tabline = true,
-            },
-        init = function ()
+            tabline = true,
+        },
+        init = function()
             vim.keymap.set("n", "<leader>hg", require("harpoon.mark").add_file)
             vim.keymap.set("n", "<leader>hh", require("harpoon.ui").toggle_quick_menu)
 

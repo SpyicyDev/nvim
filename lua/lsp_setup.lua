@@ -40,10 +40,17 @@ lsp_capabilities.textDocument.foldingRange = {
     lineFoldingOnly = true
 }
 
+local on_attach = function(client, bufnr)
+    if client.server_capabilities["documentSymbolProvider"] then
+        require("nvim-navic").attach(client, bufnr)
+    end
+    require("lsp-format").on_attach(client, bufnr)
+end
+
 local default_setup = function(server)
     require('lspconfig')[server].setup({
         capabilities = lsp_capabilities,
-        on_attach = require("lsp-format").on_attach,
+        on_attach = on_attach,
     })
 end
 

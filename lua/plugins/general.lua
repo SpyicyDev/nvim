@@ -1,18 +1,5 @@
 return {
     -- colorscheme
-    {
-        "catppuccin/nvim",
-        name = "catppuccin",
-        priority = 1000,
-        opts = {
-            integrations = {
-                navic = {
-                    enabled = true,
-                    custom_bg = "NONE", -- "lualine" will set background to mantle
-                },
-            },
-        },
-    },
 
     -- general/library plugins
     "nvim-tree/nvim-web-devicons",
@@ -22,9 +9,6 @@ return {
         'stevearc/dressing.nvim',
         opts = {},
     },
-
-    -- obsession for session management
-    "tpope/vim-obsession",
 
     -- databases
     "tpope/vim-dadbod",
