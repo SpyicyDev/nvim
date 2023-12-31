@@ -19,6 +19,8 @@ return {
             "saadparwaiz1/cmp_luasnip",
         },
     },
+
+    -- null-ls yay still alive!
     "nvimtools/none-ls.nvim",
     {
         "jay-babu/mason-null-ls.nvim",
@@ -27,4 +29,16 @@ return {
 
     -- icons for LSP
     "onsails/lspkind.nvim",
+
+    -- autoformat
+    "lukas-reineke/lsp-format.nvim",
+
+    -- neovim API setup
+    { "folke/neodev.nvim", opts = {}, priority = 999 },
+
+    -- better renaming
+    {
+        "smjonas/inc-rename.nvim",
+        opts = {},
+    }
 }

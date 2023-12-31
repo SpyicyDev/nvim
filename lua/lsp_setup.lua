@@ -27,7 +27,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
         vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
         vim.keymap.set('n', 'gs', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
 
-        vim.keymap.set('n', 'gn', '<cmd>lua vim.lsp.buf.rename()<cr>', opts)
+        vim.keymap.set('n', 'gn', ':IncRename ', opts)
         vim.keymap.set({ 'n', 'x' }, 'gf', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
         vim.keymap.set('n', 'gc', '<cmd>lua vim.lsp.buf.code_action()<cr>', opts)
     end
@@ -43,6 +43,7 @@ lsp_capabilities.textDocument.foldingRange = {
 local default_setup = function(server)
     require('lspconfig')[server].setup({
         capabilities = lsp_capabilities,
+        on_attach = require("lsp-format").on_attach,
     })
 end
 
@@ -51,24 +52,6 @@ require('mason-lspconfig').setup({
     ensure_installed = {},
     handlers = {
         default_setup,
-        lua_ls = function()
-            require('lspconfig').lua_ls.setup({
-                capabilities = lsp_capabilities,
-                settings = {
-                    Lua = {
-                        runtime = {
-                            version = 'LuaJIT'
-                        },
-                        diagnostics = {
-                            globals = { 'vim' },
-                        },
-                        workspace = {
-                            library = vim.api.nvim_get_runtime_file("lua", true),
-                        }
-                    }
-                }
-            })
-        end,
     },
 })
 

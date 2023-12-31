@@ -21,13 +21,6 @@ return {
     -- dot dot dot
     "tpope/vim-repeat",
 
-    -- git
-    {
-        "tpope/vim-fugitive",
-        init = function()
-            vim.keymap.set("n", "<leader>g", vim.cmd.Git)
-        end
-    },
 
     -- auto pairs you get it
     {
@@ -48,6 +41,7 @@ return {
     -- error corroborator
     {
         "folke/trouble.nvim",
+
         init = function()
             vim.keymap.set('n', "<leader>xx", "<cmd>TroubleToggle<cr>")
         end
