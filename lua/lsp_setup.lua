@@ -100,6 +100,7 @@ cmp.setup({
         { name = 'buffer',  keyword_length = 3 },
         { name = 'luasnip', keyword_length = 2 },
     }),
+    ---@diagnostic disable-next-line: missing-fields
     formatting = {
         fields = { 'abbr', 'kind', 'menu' },
         format = require('lspkind').cmp_format({

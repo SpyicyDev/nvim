@@ -1,6 +1,18 @@
 return {
     -- colorscheme
-    { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
+    {
+        "catppuccin/nvim",
+        name = "catppuccin",
+        priority = 1000,
+        opts = {
+            integrations = {
+                navic = {
+                    enabled = true,
+                    custom_bg = "NONE", -- "lualine" will set background to mantle
+                },
+            },
+        },
+    },
 
     -- general/library plugins
     "nvim-tree/nvim-web-devicons",
