@@ -9,6 +9,7 @@ return {
         init = function()
             -- restore the session for the current directory
             vim.api.nvim_set_keymap("n", "<leader>qs", [[<cmd>lua require("persistence").load()<cr>]], {})
+            vim.keymap.set("n", "<leader>sl", [[<cmd>lua require("persistence").load({ last = true })<cr>]], {})
         end
     }
 }
