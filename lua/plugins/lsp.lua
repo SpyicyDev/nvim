@@ -40,5 +40,8 @@ return {
     {
         "smjonas/inc-rename.nvim",
         opts = {},
-    }
+    },
+
+    -- better code actions window
+    "aznhe21/actions-preview.nvim",
 }
