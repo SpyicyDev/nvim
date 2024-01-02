@@ -1,4 +1,3 @@
----@diagnostic disable: missing-fields
 return {
     {
         "numToStr/FTerm.nvim",
@@ -7,9 +6,9 @@ return {
 
             local fterm = require("FTerm")
 
-            local gitui = fterm:new({
-                ft = 'fterm_gitui', -- You can also override the default filetype, if you want
-                cmd = "gitui -t mocha.ron",
+            local lazygit = fterm:new({
+                ft = 'fterm_lazygit', -- You can also override the default filetype, if you want
+                cmd = "lazygit",
                 dimensions = {
                     height = 0.9,
                     width = 0.9
@@ -17,7 +16,7 @@ return {
             })
 
             vim.keymap.set({ 'n', 't' }, '<A-g>', function()
-                gitui:toggle()
+                lazygit:toggle()
             end)
         end
     }
