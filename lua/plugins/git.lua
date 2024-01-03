@@ -1,12 +1,5 @@
 return {
-    --[[
-    {
-        "tpope/vim-fugitive",
-        init = function()
-            vim.keymap.set("n", "<leader>g", vim.cmd.Git)
-        end
-    }, ]]
-    {
+    { --[[
         "NeogitOrg/neogit",
         dependencies = {
             "nvim-lua/plenary.nvim",  -- required
@@ -18,7 +11,7 @@ return {
         config = true,
         init = function()
             vim.keymap.set("n", "<leader>g", function() require("neogit").open({ kind = "replace" }) end)
-        end
+        end --]]
     },
 
     {
