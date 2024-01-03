@@ -15,7 +15,7 @@ return {
                 }
             })
 
-            vim.keymap.set({ 'n' }, '<leader>g', function()
+            vim.keymap.set({ 'n', 't' }, '<A-g>', function()
                 lazygit:toggle()
             end)
         end
