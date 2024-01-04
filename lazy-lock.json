@@ -42,7 +42,6 @@
   "nvim-treesitter": { "branch": "master", "commit": "e49f1e8ef3e8450a8446cb1f2bbb53c919f60b6d" },
   "nvim-ufo": { "branch": "main", "commit": "c6d88523f574024b788f1c3400c5d5b9bb1a0407" },
   "nvim-web-devicons": { "branch": "master", "commit": "cff25ce621e6d15fae0b0bfe38c00be50ce38468" },
-  "obsidian.nvim": { "branch": "main", "commit": "62c1ab586f6d16458696bf67d2550f6e327717b1" },
   "oil.nvim": { "branch": "master", "commit": "523b61430cb7365f8f86609c2ea60e48456bac63" },
   "peek.nvim": { "branch": "master", "commit": "4163a48f190d2b2d94840be3eb38b4af83961ebe" },
   "persistence.nvim": { "branch": "main", "commit": "ad538bfd5336f1335cdb6fd4e0b0eebfa6e12f32" },
