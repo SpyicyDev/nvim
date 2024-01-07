@@ -2,6 +2,7 @@ return {
     -- code running
     {
         "CRAG666/code_runner.nvim",
+        cond = false,
         opts = {
             mode = "float",
             startinsert = true,
@@ -39,5 +40,5 @@ return {
         end,
 
         event = "BufReadPre",
-    },
+    }, --]]
 }
