@@ -1,8 +1,6 @@
 return {
-        { -- also line wrapping
+    {     -- also line wrapping
         "andrewferrier/wrapping.nvim",
-        opts = {
-            softener = { tex = true },
-        },
+        opts = {},
     },
 }
