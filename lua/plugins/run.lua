@@ -1,11 +1,18 @@
 return {
     {
         "spyicydev/run.nvim",
-        opts = {},
+        opts = {
+            filetype = {
+                python = function()
+                    if vim.fn.findfile("pyproject.toml", ".;") ~= "" then
+                        return "poetry run python3 %f"
+                    else
+                        return "python3 %f"
+                    end
+                end,
+                lua = "lua %f",
+            },
+        },
         dev = true,
-        priority = 995,
-        init = function()
-            vim.keymap.set("n", "<leader>rr", function() require("run").run() end, { noremap = true, silent = false })
-        end,
     }
 }
