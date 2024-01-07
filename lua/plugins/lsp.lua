@@ -30,9 +30,6 @@ return {
     -- icons for LSP
     "onsails/lspkind.nvim",
 
-    -- autoformat
-    "lukas-reineke/lsp-format.nvim",
-
     -- neovim API setup
     { "folke/neodev.nvim", opts = {}, priority = 999 },
 
