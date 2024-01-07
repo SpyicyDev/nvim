@@ -1,6 +1,9 @@
 return {
     {
         "spyicydev/run.nvim",
+        dependencies = {
+            "numToStr/FTerm.nvim",
+        },
         opts = {
             filetype = {
                 python = function()
