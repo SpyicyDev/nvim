@@ -3,6 +3,9 @@ return {
     {
         "folke/todo-comments.nvim",
         dependencies = { "nvim-lua/plenary.nvim" },
-        opts = {}
+        opts = {},
+        init = function ()
+            vim.keymap.set("n", "<leader>tt", "<cmd>TodoTrouble<cr>")
+        end
     },
 }
