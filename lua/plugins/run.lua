@@ -14,6 +14,7 @@ return {
                     end
                 end,
                 lua = "lua %f",
+                markdown = ":MarkdownPreview"
             },
         },
         dev = true,
