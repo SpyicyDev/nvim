@@ -132,7 +132,8 @@ cmp.setup({
         })
     },
     mapping = cmp.mapping.preset.insert({
-        ['<M-q>'] = cmp.mapping.confirm(),
+        --[[
+        ['<M-w>'] = cmp.mapping.confirm(),
         ["<M-s>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 cmp.select_next_item()
@@ -155,10 +156,45 @@ cmp.setup({
                 fallback()
             end
         end, { "i", "s" }),
+        ]]
 
-        ["<M-w>"] = cmp.mapping(function(fallback)
+        ["<M-e>"] = cmp.mapping(function(fallback)
             cmp.close()
-        end)
+        end),
+
+        ['<CR>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                if luasnip.expandable() then
+                    luasnip.expand()
+                else
+                    cmp.confirm({
+                        select = true,
+                    })
+                end
+            else
+                fallback()
+            end
+        end),
+
+        ["<Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.select_next_item()
+            elseif luasnip.locally_jumpable(1) then
+                luasnip.jump(1)
+            else
+                fallback()
+            end
+        end, { "i", "s" }),
+
+        ["<S-Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.select_prev_item()
+            elseif luasnip.locally_jumpable(-1) then
+                luasnip.jump(-1)
+            else
+                fallback()
+            end
+        end, { "i", "s" }),
     }),
     window = {
         completion = cmp.config.window.bordered(),

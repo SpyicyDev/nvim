@@ -1,6 +1,5 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
--- vim.keymap.set("n", "<leader>pv", "<cmd>Neotree position=current toggle=true reveal=true<cr>")
 
 vim.keymap.set("n", "<leader><leader>", "<cmd>w<cr>")
 

@@ -21,7 +21,6 @@ return {
                     local dune_file = vim.fn.findfile("dune", ".;")
                     local dune_file_content = io.open(dune_file):read("*a")
 
-                    local module_name = string.match(dune_file_content, "executable%s+(%S+)%s+")
 
                     return "dune exec " .. module_name
 
