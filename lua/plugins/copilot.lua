@@ -1,4 +1,5 @@
 return {
+    --[[
     {
         "zbirenbaum/copilot.lua",
         cmd = "Copilot",
@@ -29,4 +30,5 @@ return {
     {
         'AndreM222/copilot-lualine',
     }
+    ]]
 }

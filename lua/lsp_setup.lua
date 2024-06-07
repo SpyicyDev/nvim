@@ -111,6 +111,7 @@ cmp.setup({
     sources = cmp.config.sources({
         { name = 'path' },
         -- { name = 'copilot' },
+        { name = 'codeium' },
         { name = 'nvim_lsp' },
         { name = 'nvim_lua' },
         { name = 'conjure' },
@@ -128,7 +129,7 @@ cmp.setup({
             mode = 'symbol_text',
             maxwidth = 50,         -- prevent the popup from showing more than provided characters
             ellipsis_char = '...', -- when popup menu exceed maxwidth, the truncated part would show ellipsis_char instead
-            symbol_map = { Copilot = "" },
+            symbol_map = { Copilot = "", Codeium = "" },
         })
     },
     mapping = cmp.mapping.preset.insert({
