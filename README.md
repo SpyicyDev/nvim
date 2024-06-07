@@ -2,6 +2,8 @@
 
 Yo. My neovim config. Should work by cloning to .config/nvim and opening and closing a few times!
 
+THIS IS THE CCI ONE - NO EXTERNAL AI
+
 ## Layout
 
 Here's the structure of the setup:
