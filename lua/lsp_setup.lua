@@ -77,6 +77,17 @@ require 'lspconfig'.julials.setup {
     end
 }
 
+require "lspconfig".basedpyright.setup({
+    -- cmd = {"poetry", "run", "basedpyright-langserver", "--stdio"},
+    capabilities = lsp_capabilities,
+    on_attach = on_attach,
+    settings = {
+        basedpyright = {
+            typeCheckingMode = "standard",
+        },
+    },
+})
+
 -- null-ls setup
 require("mason-null-ls").setup({
     ensure_installed = {},
@@ -111,7 +122,7 @@ cmp.setup({
     sources = cmp.config.sources({
         { name = 'path' },
         -- { name = 'copilot' },
-        { name = 'codeium' },
+        -- { name = 'codeium' },
         { name = 'nvim_lsp' },
         { name = 'nvim_lua' },
         { name = 'conjure' },
