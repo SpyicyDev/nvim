@@ -53,11 +53,15 @@ local default_setup = function(server)
     })
 end
 
+local noop = function() end
+
+
 require('mason').setup({})
 require('mason-lspconfig').setup({
     ensure_installed = {},
     handlers = {
         default_setup,
+        ['jdtls'] = noop,
     },
 })
 
@@ -76,6 +80,7 @@ require 'lspconfig'.julials.setup {
         end
     end
 }
+
 
 -- null-ls setup
 require("mason-null-ls").setup({
@@ -110,8 +115,7 @@ cmp.setup({
     },
     sources = cmp.config.sources({
         { name = 'path' },
-        -- { name = 'copilot' },
-        { name = 'codeium' },
+        { name = 'lazydev', group_index = 0 },
         { name = 'nvim_lsp' },
         { name = 'nvim_lua' },
         { name = 'conjure' },
@@ -159,11 +163,26 @@ cmp.setup({
         end, { "i", "s" }),
         ]]
 
-        ["<M-e>"] = cmp.mapping(function(fallback)
-            cmp.close()
-        end),
 
-        ['<CR>'] = cmp.mapping(function(fallback)
+
+        ['<C-e>'] = cmp.mapping({
+            i = function(fallback)
+                if cmp.visible() then
+                    cmp.close()
+                else
+                    cmp.complete()
+                end
+            end,
+            c = function(fallback)
+                if cmp.visible() then
+                    cmp.close()
+                else
+                    cmp.complete()
+                end
+            end,
+        }),
+
+        ['<C-y>'] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 if luasnip.expandable() then
                     luasnip.expand()
@@ -177,7 +196,7 @@ cmp.setup({
             end
         end),
 
-        ["<Tab>"] = cmp.mapping(function(fallback)
+        ["<C-n>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 cmp.select_next_item()
             elseif luasnip.locally_jumpable(1) then
@@ -187,7 +206,7 @@ cmp.setup({
             end
         end, { "i", "s" }),
 
-        ["<S-Tab>"] = cmp.mapping(function(fallback)
+        ["<C-p>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 cmp.select_prev_item()
             elseif luasnip.locally_jumpable(-1) then

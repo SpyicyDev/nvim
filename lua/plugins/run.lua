@@ -16,14 +16,12 @@ return {
                 rust = "cargo run",
                 lua = "lua %f",
                 markdown = ":MarkdownPreview",
-                ocaml = function ()
-                    -- find the main executable module name from the dune file in the bin directory
-                    local dune_file = vim.fn.findfile("dune", ".;")
-                    local dune_file_content = io.open(dune_file):read("*a")
-
-
-                    return "dune exec " .. module_name
-
+                java = function()
+                    if vim.fn.findfile("build.gradle", ".;") ~= "" then
+                        return "./gradlew run"
+                    else
+                        return "java %f"
+                    end
                 end,
             },
         },

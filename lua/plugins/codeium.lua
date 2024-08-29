@@ -9,6 +9,7 @@ return {
             require("codeium").setup({
                 enable_chat = true,
             })
-        end
+        end,
+        cond = false,
     },
 }

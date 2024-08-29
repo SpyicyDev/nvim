@@ -3,7 +3,7 @@ return {
     {
         "theprimeagen/harpoon",
         opts = {
-            tabline = true,
+            tabline = false,
         },
         init = function()
             vim.keymap.set("n", "<leader>hg", require("harpoon.mark").add_file)

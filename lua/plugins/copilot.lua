@@ -1,5 +1,4 @@
 return {
-    --[[
     {
         "zbirenbaum/copilot.lua",
         cmd = "Copilot",
@@ -7,11 +6,11 @@ return {
         opts = {
             suggestion = {
                 enabled = true,
-                auto_trigger = false,
+                auto_trigger = true,
                 keymap = {
-                    next = "<M-x>",
-                    prev = "<M-z>",
-                    accept = "<M-c>",
+                    next = "<M-]>",
+                    prev = "<M-[>",
+                    accept = "<Tab>",
                 },
             },
         },
@@ -30,5 +29,4 @@ return {
     {
         'AndreM222/copilot-lualine',
     }
-    ]]
 }
