@@ -57,11 +57,4 @@ return {
         "aznhe21/actions-preview.nvim",
         event = "LspAttach"
     },
-
-    {
-        "lvimuser/lsp-inlayhints.nvim",
-        event = "LspAttach",
-        cond = false,
-        opts = {}
-    },
 }
