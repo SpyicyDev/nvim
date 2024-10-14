@@ -23,6 +23,15 @@ return {
                         return "java %f"
                     end
                 end,
+                ocaml = function()
+                    if vim.fn.findfile("dune-project", ".;") ~= "" or vim.fn.findfile("dune", ".;") ~= "" then
+                        local module_name = vim.fn.expand("%:t:r")
+                        return "dune exec ./" .. module_name .. ".exe"
+                    else
+                        local output_name = vim.fn.expand("%:r")
+                        return "ocamlfind ocamlopt -o " .. output_name .. " %f && ./" .. output_name
+                    end
+                end,
             },
         },
     }

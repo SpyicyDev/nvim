@@ -4,10 +4,11 @@ return {
         ft = { "java" },
         config = function()
             local jdtls_bin = vim.fn.stdpath("data") .. "/mason/bin/jdtls"
-            local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
+            local cwd = vim.fn.getcwd()
+            local project_path = cwd:match("/projects/(.*)")
+            local project_name = project_path or vim.fn.fnamemodify(cwd, ":t")
             local workspace_dir = "/Users/mackhaymond/projects/" .. project_name
             local dir = vim.fs.root(0, { ".git", "mvnw", "gradlew" })
-            print(dir)
 
             local config = {
                 -- The command that starts the language server
@@ -26,16 +27,6 @@ return {
                     java = {},
                 },
 
-                -- Language server `initializationOptions`
-                -- You need to extend the `bundles` with paths to jar files
-                -- if you want to use additional eclipse.jdt.ls plugins.
-                --
-                -- See https://github.com/mfussenegger/nvim-jdtls#java-debug-installation
-                --
-                -- If you don't plan on using the debugger or other eclipse.jdt.ls plugins you can remove this
-                init_options = {
-                    bundles = {},
-                },
             }
             -- This starts a new client & server,
             -- or attaches to an existing client & server depending on the `root_dir`.

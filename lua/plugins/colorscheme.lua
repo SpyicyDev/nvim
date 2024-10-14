@@ -37,6 +37,7 @@ return {
                 notify = true,
                 lsp_trouble = true,
                 leap = true,
+                alpha = true,
             },
         },
     },

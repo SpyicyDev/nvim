@@ -35,6 +35,6 @@ return {
             { "R",     mode = { "o", "x" },      function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
             { "<M-s>", mode = { "c" },           function() require("flash").toggle() end,            desc = "Toggle Flash Search" },
         },
-        cond = true
+        cond = false
     }
 }

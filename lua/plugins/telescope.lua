@@ -4,8 +4,10 @@ return {
         'nvim-telescope/telescope.nvim',
         config = function()
             local builtin = require('telescope.builtin')
-            vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-            vim.keymap.set('n', '<leader>fh', "<cmd>lua require('telescope').extensions.recent_files.pick()<CR>", {})
+            vim.keymap.set('n', '<leader>fh', builtin.find_files, {})
+            vim.keymap.set("n", "<leader>ff", function()
+                require("telescope").extensions.smart_open.smart_open()
+            end, { noremap = true, silent = true })
             vim.keymap.set('n', '<leader>fr', '<Cmd>Telescope frecency<CR>', {})
             vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
             vim.keymap.set('n', '<leader>fm', '<cmd>Telescope harpoon marks<cr>', {})
@@ -33,9 +35,17 @@ return {
     --     end,
     -- },
     {
-        "smartpde/telescope-recent-files",
+        "danielfalk/smart-open.nvim",
+        branch = "0.2.x",
         config = function()
-            require("telescope").load_extension("recent_files")
+            require("telescope").load_extension("smart_open")
         end,
+        dependencies = {
+            "kkharji/sqlite.lua",
+            -- Only required if using match_algorithm fzf
+            { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+            -- Optional.  If installed, native fzy will be used when match_algorithm is fzy
+            { "nvim-telescope/telescope-fzy-native.nvim" },
+        },
     },
 }
