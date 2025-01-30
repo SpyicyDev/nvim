@@ -6,6 +6,9 @@ return {
         },
         opts = {
             filetype = {
+                scala = function ()
+                    vim.notify("Execute 'sbt run' in a separate tmux window!")
+                end,
                 python = function()
                     if vim.fn.findfile("pyproject.toml", ".;") ~= "" then
                         return "poetry run python3 %f"
@@ -23,15 +26,7 @@ return {
                         return "java %f"
                     end
                 end,
-                ocaml = function()
-                    if vim.fn.findfile("dune-project", ".;") ~= "" or vim.fn.findfile("dune", ".;") ~= "" then
-                        local module_name = vim.fn.expand("%:t:r")
-                        return "dune exec ./" .. module_name .. ".exe"
-                    else
-                        local output_name = vim.fn.expand("%:r")
-                        return "ocamlfind ocamlopt -o " .. output_name .. " %f && ./" .. output_name
-                    end
-                end,
+                r = "rscript %f",
             },
         },
     }

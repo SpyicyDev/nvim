@@ -71,6 +71,12 @@ require('lspconfig').ocamllsp.setup {
     on_attach = on_attach,
 }
 
+require('lspconfig').pyright.setup {
+    capabilities = lsp_capabilities,
+    on_attach = on_attach,
+}
+
+
 -- specific config for julia
 require 'lspconfig'.julials.setup {
     on_new_config = function(new_config, _)

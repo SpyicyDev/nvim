@@ -26,5 +26,12 @@ vim.loader.enable()
 -- set colorscheme
 vim.cmd.colorscheme "catppuccin-mocha"
 
+vim.filetype.add({
+    extension = {
+        r = 'r',
+        R = 'r',
+    },
+})
+
 -- initialize LSP
 require('lsp_setup')
