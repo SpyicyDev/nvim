@@ -1,5 +1,5 @@
 return {
     "supermaven-inc/supermaven-nvim",
-    opts = { },
+    opts = {},
     cond = false,
 }

@@ -4,10 +4,10 @@ return {
         'nvim-telescope/telescope.nvim',
         config = function()
             local builtin = require('telescope.builtin')
-            vim.keymap.set('n', '<leader>fh', builtin.find_files, {})
-            vim.keymap.set("n", "<leader>ff", function()
-                require("telescope").extensions.smart_open.smart_open()
-            end, { noremap = true, silent = true })
+            vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
+            -- vim.keymap.set("n", "<leader>ff", function()
+            --     require("telescope").extensions.smart_open.smart_open()
+            -- end, { noremap = true, silent = true })
             vim.keymap.set('n', '<leader>fr', '<Cmd>Telescope frecency<CR>', {})
             vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
             vim.keymap.set('n', '<leader>fm', '<cmd>Telescope harpoon marks<cr>', {})
@@ -37,6 +37,7 @@ return {
     {
         "danielfalk/smart-open.nvim",
         branch = "0.2.x",
+        cond = false,
         config = function()
             require("telescope").load_extension("smart_open")
         end,
