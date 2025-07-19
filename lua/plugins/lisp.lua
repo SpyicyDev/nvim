@@ -21,7 +21,6 @@ return {
         end,
     },
     "gpanders/nvim-parinfer",
-    "tpope/vim-surround",
     --"guns/vim-sexp",
     --"tpope/vim-sexp-mappings-for-regular-people",
 }
