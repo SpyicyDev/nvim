@@ -76,6 +76,11 @@ require('lspconfig').pyright.setup {
     on_attach = on_attach,
 }
 
+require('lspconfig').clangd.setup {
+    capabilities = lsp_capabilities,
+    on_attach = on_attach,
+}
+
 
 -- specific config for julia
 require 'lspconfig'.julials.setup {
