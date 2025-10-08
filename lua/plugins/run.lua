@@ -16,6 +16,7 @@ return {
                         return "python3 %f"
                     end
                 end,
+                cpp = ":CMakeRun",
                 rust = "cargo run",
                 lua = "lua %f",
                 markdown = ":MarkdownPreview",

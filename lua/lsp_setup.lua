@@ -47,7 +47,7 @@ local on_attach = function(client, bufnr)
 end
 
 local default_setup = function(server)
-    require('lspconfig')[server].setup({
+    vim.lsp.config(server, {
         capabilities = lsp_capabilities,
         on_attach = on_attach,
     })
@@ -66,26 +66,26 @@ require('mason-lspconfig').setup({
 })
 
 -- ocamllsp installed by opam, this sets it up
-require('lspconfig').ocamllsp.setup {
+vim.lsp.config('ocamllsp', {
     capabilities = lsp_capabilities,
     on_attach = on_attach,
-}
+})
 
-require('lspconfig').pyright.setup {
+vim.lsp.config('pyright', {
     capabilities = lsp_capabilities,
     on_attach = on_attach,
-}
+})
 
 
 -- specific config for julia
-require 'lspconfig'.julials.setup {
+vim.lsp.config('julials', {
     on_new_config = function(new_config, _)
         local julia = vim.fn.expand("~/.julia/environments/nvim-lspconfig/bin/julia")
-        if require 'lspconfig'.util.path.is_file(julia) then
+        if vim.fs.find(julia)[1] then
             new_config.cmd[1] = julia
         end
     end
-}
+})
 
 
 -- null-ls setup
