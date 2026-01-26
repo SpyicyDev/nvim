@@ -70,11 +70,13 @@ vim.lsp.config('ocamllsp', {
     capabilities = lsp_capabilities,
     on_attach = on_attach,
 })
+vim.lsp.enable({"ocamllsp"})
 
 vim.lsp.config('pyright', {
     capabilities = lsp_capabilities,
     on_attach = on_attach,
 })
+vim.lsp.enable({"pyright"})
 
 
 -- specific config for julia
@@ -86,6 +88,7 @@ vim.lsp.config('julials', {
         end
     end
 })
+vim.lsp.enable({"julials"})
 
 
 -- null-ls setup
