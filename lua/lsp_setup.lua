@@ -128,7 +128,6 @@ cmp.setup({
         { name = 'nvim_lsp' },
         { name = 'nvim_lua' },
         { name = 'conjure' },
-        -- { name = 'supermaven' },
         { name = 'buffer',  keyword_length = 3 },
         { name = 'luasnip', keyword_length = 2 },
     }),
@@ -143,7 +142,7 @@ cmp.setup({
             mode = 'symbol_text',
             maxwidth = 50,         -- prevent the popup from showing more than provided characters
             ellipsis_char = '...', -- when popup menu exceed maxwidth, the truncated part would show ellipsis_char instead
-            symbol_map = { Copilot = "", Supermaven = "", },
+            symbol_map = { Copilot = "", },
         })
     },
     mapping = cmp.mapping.preset.insert({
