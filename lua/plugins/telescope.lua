@@ -10,7 +10,7 @@ return {
             -- end, { noremap = true, silent = true })
             vim.keymap.set('n', '<leader>fr', '<Cmd>Telescope frecency<CR>', {})
             vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-            vim.keymap.set('n', '<leader>fm', '<cmd>Telescope harpoon marks<cr>', {})
+            vim.keymap.set('n', '<leader>fm', '<cmd>Telescope grapple tags<cr>', {})
             vim.keymap.set('n', '<leader>ft', "<cmd>TodoTelescope<CR>")
             vim.keymap.set('n', '<leader>fk', builtin.keymaps, {})
             vim.keymap.set('n', '<leader>fl', builtin.help_tags, {})
@@ -18,7 +18,7 @@ return {
             vim.keymap.set('n', '<leader>fb', require('telescope').extensions.file_browser.file_browser)
 
             require('telescope').load_extension('fzf')
-            require("telescope").load_extension('harpoon')
+            require("telescope").load_extension('grapple')
             require("telescope").load_extension "file_browser"
         end,
 

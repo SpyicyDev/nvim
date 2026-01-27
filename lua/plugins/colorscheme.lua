@@ -12,7 +12,6 @@ return {
                     dim_context = false,
                     alt_background = false,
                 },
-                harpoon = true,
                 gitsigns = true,
                 mason = true,
                 cmp = true,
