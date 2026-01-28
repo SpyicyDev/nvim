@@ -126,6 +126,7 @@ cmp.setup({
         { name = 'path' },
         { name = 'lazydev', group_index = 0 },
         { name = 'nvim_lsp' },
+        { name = 'copilot', group_index = 2 },
         { name = 'nvim_lua' },
         { name = 'conjure' },
         { name = 'buffer',  keyword_length = 3 },
@@ -146,22 +147,19 @@ cmp.setup({
         })
     },
     mapping = cmp.mapping.preset.insert({
-        --[[
-        ['<M-w>'] = cmp.mapping.confirm(),
-        ["<M-s>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
+        ["<Tab>"] = cmp.mapping(function(fallback)
+            if cmp.visible() and has_words_before() then
                 cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
                 luasnip.expand_or_jump()
-                -- elseif has_words_before() then
-                -- cmp.complete()
+            elseif has_words_before() then
+                cmp.complete()
             else
                 fallback()
             end
         end, { "i", "s" }),
 
-
-        ["<M-a>"] = cmp.mapping(function(fallback)
+        ["<S-Tab>"] = cmp.mapping(function(fallback)
             if cmp.visible() then
                 cmp.select_prev_item()
             elseif luasnip.jumpable(-1) then
@@ -170,9 +168,14 @@ cmp.setup({
                 fallback()
             end
         end, { "i", "s" }),
-        ]]
 
-
+        ["<CR>"] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+                cmp.confirm({ select = false })
+            else
+                fallback()
+            end
+        end, { "i", "s" }),
 
         ['<C-e>'] = cmp.mapping({
             i = function(fallback)
@@ -191,39 +194,7 @@ cmp.setup({
             end,
         }),
 
-        ['<C-y>'] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-                if luasnip.expandable() then
-                    luasnip.expand()
-                else
-                    cmp.confirm({
-                        select = true,
-                    })
-                end
-            else
-                fallback()
-            end
-        end),
-
-        ["<C-n>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-                cmp.select_next_item()
-            elseif luasnip.locally_jumpable(1) then
-                luasnip.jump(1)
-            else
-                fallback()
-            end
-        end, { "i", "s" }),
-
-        ["<C-p>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-                cmp.select_prev_item()
-            elseif luasnip.locally_jumpable(-1) then
-                luasnip.jump(-1)
-            else
-                fallback()
-            end
-        end, { "i", "s" }),
+        ['<C-y>'] = cmp.mapping.confirm({ select = true }),
     }),
     window = {
         completion = cmp.config.window.bordered(),
