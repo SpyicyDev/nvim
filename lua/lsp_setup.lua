@@ -126,11 +126,11 @@ cmp.setup({
         { name = 'path' },
         { name = 'lazydev', group_index = 0 },
         { name = 'nvim_lsp' },
-        { name = 'copilot', group_index = 2 },
         { name = 'nvim_lua' },
         { name = 'conjure' },
         { name = 'buffer',  keyword_length = 3 },
         { name = 'luasnip', keyword_length = 2 },
+        { name = 'copilot', max_item_count = 3 },
     }),
     ---@diagnostic disable-next-line: missing-fields
     formatting = {
@@ -197,8 +197,8 @@ cmp.setup({
         ['<C-y>'] = cmp.mapping.confirm({ select = true }),
     }),
     window = {
-        completion = cmp.config.window.bordered(),
-        documentation = cmp.config.window.bordered(),
+        completion = cmp.config.window.bordered({ border = 'single' }),
+        documentation = cmp.config.window.bordered({ border = 'single' }),
     },
     snippet = {
         expand = function(args)
