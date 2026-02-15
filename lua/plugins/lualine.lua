@@ -29,14 +29,18 @@ return {
 
                 local ok, lualine = pcall(require, "lualine")
                 if ok then
-                    lualine.refresh({ place = { "statusline" } })
+                    v.schedule(function()
+                        lualine.refresh({ place = { "statusline" } })
+                    end)
                 else
                     v.cmd("redrawstatus")
                 end
             end
 
-            local oc_timer_started = false
-            local oc_timer
+            local oc_probe_timer
+            local oc_update_inflight = false
+            local OC_FAST_DELAY_MS = 25
+            local OC_ACTIVITY_DELAY_MS = 120
 
             local function oc_is_windows()
                 return v.fn.has("win32") == 1
@@ -84,77 +88,104 @@ return {
             end
 
             local function oc_update_async()
-                local ok, server = pcall(require, "opencode.cli.server")
-                if not ok or type(server) ~= "table" or type(server.get_port) ~= "function" then
+                if oc_update_inflight then
+                    return
+                end
+                oc_update_inflight = true
+
+                if oc_is_windows() then
                     oc_set_state("inactive", nil)
+                    oc_update_inflight = false
                     return
                 end
 
-                local promise = server.get_port(false)
-                if type(promise) ~= "table" or type(promise.next) ~= "function" then
-                    oc_set_state("inactive", nil)
-                    return
-                end
-
-                promise
-                    :next(function(port)
-                        local n = tonumber(port)
-                        if not n then
-                            oc_set_state("inactive", nil)
-                            return
-                        end
-
-                        if oc_is_windows() then
-                            oc_set_state("external", n)
-                            return
-                        end
-
-                        v.system({ "lsof", "-n", "-P", "-iTCP:" .. tostring(n), "-sTCP:LISTEN", "-t" }, { text = true }, function(res)
-                            if res.code ~= 0 then
-                                oc_set_state("inactive", nil)
-                                return
-                            end
-
-                            local pid = tonumber((res.stdout or ""):match("%d+"))
-                            if not pid then
-                                oc_set_state("inactive", nil)
-                                return
-                            end
-
-                            oc_is_descendant_of_nvim(pid, function(is_internal)
-                                oc_set_state(is_internal and "internal" or "external", n)
-                            end)
-                        end)
-                    end)
-                    :catch(function()
+                v.system({ "pgrep", "-f", "opencode.*--port" }, { text = true }, function(res)
+                    if res.code ~= 0 then
                         oc_set_state("inactive", nil)
-                    end)
+                        oc_update_inflight = false
+                        return
+                    end
+
+                    local pids = {}
+                    for line in (res.stdout or ""):gmatch("[^\r\n]+") do
+                        local pid = tonumber(line)
+                        if pid then
+                            table.insert(pids, pid)
+                        end
+                    end
+
+                    if #pids == 0 then
+                        oc_set_state("inactive", nil)
+                        oc_update_inflight = false
+                        return
+                    end
+
+                    local idx = 1
+                    local function check_next_pid()
+                        local pid = pids[idx]
+                        if not pid then
+                            oc_set_state("external", nil)
+                            oc_update_inflight = false
+                            return
+                        end
+
+                        oc_is_descendant_of_nvim(pid, function(is_internal)
+                            if is_internal then
+                                oc_set_state("internal", nil)
+                                oc_update_inflight = false
+                                return
+                            end
+
+                            idx = idx + 1
+                            check_next_pid()
+                        end)
+                    end
+
+                    check_next_pid()
+                end)
             end
 
-            local function oc_ensure_timer()
-                if oc_timer_started then
-                    return
-                end
-                oc_timer_started = true
-
-                oc_timer = oc_timer or uv.new_timer()
-                if not oc_timer then
+            local function oc_schedule_update(delay_ms)
+                if #v.api.nvim_list_uis() == 0 then
                     return
                 end
 
-                oc_timer:start(
+                delay_ms = delay_ms or 0
+                if oc_update_inflight and delay_ms == 0 then
+                    return
+                end
+
+                oc_probe_timer = oc_probe_timer or uv.new_timer()
+                if not oc_probe_timer then
+                    oc_update_async()
+                    return
+                end
+
+                oc_probe_timer:stop()
+                oc_probe_timer:start(
+                    delay_ms,
                     0,
-                    1500,
                     v.schedule_wrap(function()
                         oc_update_async()
                     end)
                 )
             end
 
+            local function oc_teardown()
+                if not oc_probe_timer then
+                    return
+                end
+
+                if not oc_probe_timer:is_closing() then
+                    oc_probe_timer:stop()
+                    oc_probe_timer:close()
+                end
+
+                oc_probe_timer = nil
+            end
+
             local oc_component = {
                 function()
-                    oc_ensure_timer()
-
                     local icon = "󰅛"
                     if oc_cache.mode == "internal" then
                         icon = "󰒮"
@@ -233,6 +264,44 @@ return {
                 inactive_winbar = {},
                 extensions = {}
             })
+
+            local oc_group = v.api.nvim_create_augroup("LualineOpencodeStatus", { clear = true })
+
+            v.api.nvim_create_autocmd({ "VimEnter", "FocusGained", "DirChanged" }, {
+                group = oc_group,
+                callback = function()
+                    oc_schedule_update(OC_FAST_DELAY_MS)
+                end,
+            })
+
+            v.api.nvim_create_autocmd({ "BufEnter", "WinEnter", "InsertLeave", "CmdlineLeave", "CursorHold", "CursorHoldI" }, {
+                group = oc_group,
+                callback = function()
+                    oc_schedule_update(OC_ACTIVITY_DELAY_MS)
+                end,
+            })
+
+            v.api.nvim_create_autocmd("User", {
+                group = oc_group,
+                pattern = {
+                    "OpencodeEvent:server.connected",
+                    "OpencodeEvent:server.disconnected",
+                    "OpencodeEvent:session.idle",
+                    "OpencodeEvent:session.error",
+                    "OpencodeEvent:permission.asked",
+                    "OpencodeEvent:permission.replied",
+                },
+                callback = function()
+                    oc_schedule_update(OC_FAST_DELAY_MS)
+                end,
+            })
+
+            v.api.nvim_create_autocmd("VimLeavePre", {
+                group = oc_group,
+                callback = oc_teardown,
+            })
+
+            oc_schedule_update(0)
         end
     },
 }
