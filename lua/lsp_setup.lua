@@ -1,3 +1,6 @@
+local M = {}
+
+function M.setup()
 -- diagnostic keybinds
 vim.keymap.set('n', 'gl', '<cmd>lua vim.diagnostic.open_float()<cr>')
 vim.keymap.set('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<cr>')
@@ -28,7 +31,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
         vim.keymap.set('n', 'gh', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
 
         vim.keymap.set('n', 'gn', ':IncRename ', opts)
-        vim.keymap.set({ 'n', 'x' }, 'gf', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
+        vim.keymap.set({ 'n', 'x' }, 'gq', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
         vim.keymap.set('n', 'gc', require("actions-preview").code_actions, opts)
     end
 })
@@ -112,7 +115,7 @@ local cmp = require('cmp')
 local luasnip = require('luasnip')
 
 local has_words_before = function()
-    unpack = unpack or table.unpack
+    local unpack = table.unpack
     local line, col = unpack(vim.api.nvim_win_get_cursor(0))
     return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
 end
@@ -208,3 +211,7 @@ cmp.setup({
 })
 
 vim.api.nvim_set_hl(0, "CmpItemKindSupermaven", {fg ="#6CC644"})
+
+end
+
+return M

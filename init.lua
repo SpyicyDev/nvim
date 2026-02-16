@@ -4,7 +4,8 @@ require('set')
 
 -- bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+local uv = vim.uv or vim.loop
+if not uv.fs_stat(lazypath) then
     vim.fn.system({
         "git",
         "clone",
@@ -24,7 +25,10 @@ require("lazy").setup("plugins", {
 vim.loader.enable()
 
 -- set colorscheme
-vim.cmd.colorscheme "catppuccin-mocha"
+local ok = pcall(vim.cmd.colorscheme, "catppuccin-mocha")
+if not ok then
+    vim.cmd.colorscheme("habamax")
+end
 
 vim.filetype.add({
     extension = {
@@ -32,6 +36,3 @@ vim.filetype.add({
         R = 'r',
     },
 })
-
--- initialize LSP
-require('lsp_setup')

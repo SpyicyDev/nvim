@@ -1,5 +1,11 @@
 return {
-    { 'neovim/nvim-lspconfig' },             -- Required
+    {
+        'neovim/nvim-lspconfig',
+        event = { "BufReadPre", "BufNewFile" },
+        config = function()
+            require('lsp_setup').setup()
+        end,
+    }, -- Required
     { 'williamboman/mason.nvim' },
     { 'williamboman/mason-lspconfig.nvim' }, -- Optional
 
