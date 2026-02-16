@@ -18,11 +18,6 @@ return {
     },
 
     {
-        "gptlang/CopilotChat.nvim",
-        cond = false,
-    },
-
-    {
         "AndreM222/copilot-lualine",
         dependencies = { "zbirenbaum/copilot.lua" },
     },
