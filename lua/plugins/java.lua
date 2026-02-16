@@ -5,15 +5,16 @@ return {
         config = function()
             local jdtls_bin = vim.fn.stdpath("data") .. "/mason/bin/jdtls"
             local cwd = vim.fn.getcwd()
-            local project_path = cwd:match("/projects/(.*)")
-            local project_name = project_path or vim.fn.fnamemodify(cwd, ":t")
-            local workspace_dir = "/Users/mackhaymond/projects/" .. project_name
-            local dir = vim.fs.root(0, { ".git", "mvnw", "gradlew" })
+            local dir = vim.fs.root(0, { ".git", "mvnw", "gradlew" }) or cwd
+            local project_name = vim.fn.fnamemodify(dir, ":t")
+            local workspace_base = vim.fn.stdpath("data") .. "/jdtls-workspaces"
+            local workspace_dir = workspace_base .. "/" .. project_name
+            local jdtls_config_dir = vim.fn.expand("~/.cache/jdtls")
 
             local config = {
                 -- The command that starts the language server
                 -- See: https://github.com/eclipse/eclipse.jdt.ls#running-from-the-command-line
-                cmd = { jdtls_bin, "-configuration", "~/.cache/jdtls", "-data", workspace_dir, },
+                cmd = { jdtls_bin, "-configuration", jdtls_config_dir, "-data", workspace_dir, },
 
                 -- 💀
                 -- This is the default if not provided, you can remove it. Or adjust as needed.
@@ -32,18 +33,19 @@ return {
             -- or attaches to an existing client & server depending on the `root_dir`.
             require("jdtls").start_or_attach(config)
 
-            vim.api.nvim_set_keymap('n', '<A-o>', "<Cmd>lua require'jdtls'.organize_imports()<CR>",
-                { noremap = true, silent = true })
-            vim.api.nvim_set_keymap('n', 'crv', "<Cmd>lua require('jdtls').extract_variable()<CR>",
-                { noremap = true, silent = true })
-            vim.api.nvim_set_keymap('v', 'crv', "<Esc><Cmd>lua require('jdtls').extract_variable(true)<CR>",
-                { noremap = true, silent = true })
-            vim.api.nvim_set_keymap('n', 'crc', "<Cmd>lua require('jdtls').extract_constant()<CR>",
-                { noremap = true, silent = true })
-            vim.api.nvim_set_keymap('v', 'crc', "<Esc><Cmd>lua require('jdtls').extract_constant(true)<CR>",
-                { noremap = true, silent = true })
-            vim.api.nvim_set_keymap('v', 'crm', "<Esc><Cmd>lua require('jdtls').extract_method(true)<CR>",
-                { noremap = true, silent = true })
+            local opts = { buffer = true, silent = true }
+            vim.keymap.set('n', '<A-o>', function() require('jdtls').organize_imports() end,
+                vim.tbl_extend('force', opts, { desc = 'Java: Organize imports' }))
+            vim.keymap.set('n', 'crv', function() require('jdtls').extract_variable() end,
+                vim.tbl_extend('force', opts, { desc = 'Java: Extract variable' }))
+            vim.keymap.set('v', 'crv', function() require('jdtls').extract_variable(true) end,
+                vim.tbl_extend('force', opts, { desc = 'Java: Extract variable (selection)' }))
+            vim.keymap.set('n', 'crc', function() require('jdtls').extract_constant() end,
+                vim.tbl_extend('force', opts, { desc = 'Java: Extract constant' }))
+            vim.keymap.set('v', 'crc', function() require('jdtls').extract_constant(true) end,
+                vim.tbl_extend('force', opts, { desc = 'Java: Extract constant (selection)' }))
+            vim.keymap.set('v', 'crm', function() require('jdtls').extract_method(true) end,
+                vim.tbl_extend('force', opts, { desc = 'Java: Extract method (selection)' }))
         end,
     }
 }
