@@ -6,7 +6,7 @@ return {
             -- Default options (optional)
 
             -- Config file patterns to load (lua supported)
-            config_files = { ".nvim.lua", ".nvimrc", ".exrc" },
+            config_files = { ".nvim.lua" },
 
             -- Where the plugin keeps files data
             hashfile = vim.fn.stdpath("data") .. "/config-local",
