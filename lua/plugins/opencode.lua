@@ -28,10 +28,14 @@ return {
                 }
             end
 
+            local opencode_port = 30000 + (vim.fn.getpid() % 20000)
+
+            ---@type opencode.Opts
             vim.g.opencode_opts = {
+                port = opencode_port,
                 provider = {
                     enabled = "snacks",
-                    cmd = "opencode --port --model openai/gpt-5.2-low",
+                    cmd = "opencode --model openai/gpt-5.2-low",
                     snacks = {
                         win = opencode_float_win(),
                     },
