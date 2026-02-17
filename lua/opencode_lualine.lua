@@ -297,17 +297,13 @@ local function parse_server_cwd(stdout)
 end
 
 local function get_configured_port()
-    local port_key = "po" .. "rt"
-    local expr = string.format("get(get(g:, 'opencode_opts', {}), '%s', v:null)", port_key)
-    local ok, configured_port = pcall(
-        v.api.nvim_eval,
-        expr
-    )
-    if not ok then
+    local opencode_opts = v.g.opencode_opts
+    if type(opencode_opts) ~= "table" then
         return nil
     end
 
-    local port = tonumber(configured_port)
+    ---@diagnostic disable-next-line: undefined-field
+    local port = tonumber(opencode_opts.port)
     if not port or port <= 0 then
         return nil
     end
@@ -510,18 +506,13 @@ local function discover_mode_via_configured_port_async(probe_id, nvim_cwd, cb)
         { "curl", "-s", "--connect-timeout", "1", "http://localhost:" .. configured_port .. "/path" },
         function(curl_res)
             if curl_res.code ~= 0 then
-                if is_missing_binary_error(curl_res) then
-                    cb(nil, format_system_error("curl", curl_res), false)
-                    return
-                end
-
-                cb(nil, nil, true)
+                cb("inactive", nil, false)
                 return
             end
 
             local server_cwd = parse_server_cwd(curl_res.stdout)
             if not server_cwd then
-                cb(nil, nil, true)
+                cb("inactive", nil, false)
                 return
             end
 
