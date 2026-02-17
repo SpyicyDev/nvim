@@ -42,7 +42,7 @@ local function reset_config()
     config = vim.deepcopy(DEFAULTS)
 end
 local augroup_id
-local initial_probe_timer
+local probe_timer
 local fallback_poll_timer
 
 local state = {
@@ -57,7 +57,14 @@ local state = {
     last_error = "",
     inflight = false,
     pending = false,
+    pending_reason = "",
+    pending_urgent = false,
+    scheduled_reason = "",
+    scheduled_due_at_ms = 0,
     last_probe_ended_at_ms = 0,
+    probe_id = 0,
+    active_probe_id = 0,
+    last_completed_probe_id = 0,
 }
 
 local function now_ms()
@@ -75,6 +82,10 @@ local function is_windows()
     return v.fn.has("win32") == 1
 end
 
+local function now_ms_or_zero()
+    return now_ms() or 0
+end
+
 local function reset_runtime_state()
     state.mode = "inactive"
     state.probe_count = 0
@@ -87,7 +98,14 @@ local function reset_runtime_state()
     state.last_error = ""
     state.inflight = false
     state.pending = false
+    state.pending_reason = ""
+    state.pending_urgent = false
+    state.scheduled_reason = ""
+    state.scheduled_due_at_ms = 0
     state.last_probe_ended_at_ms = 0
+    state.probe_id = 0
+    state.active_probe_id = 0
+    state.last_completed_probe_id = 0
 end
 
 local function close_timer(timer)
@@ -105,7 +123,7 @@ end
 
 local function count_open_timers()
     local open_count = 0
-    if initial_probe_timer and not initial_probe_timer:is_closing() then
+    if probe_timer and not probe_timer:is_closing() then
         open_count = open_count + 1
     end
     if fallback_poll_timer and not fallback_poll_timer:is_closing() then
@@ -147,13 +165,34 @@ local function set_mode(mode)
     end
 
     state.mode = mode
-    state.last_mode_change_at_ms = now_ms() or 0
+    state.last_mode_change_at_ms = now_ms_or_zero()
     refresh_statusline()
 end
 
-local function run_probe(reason)
+local function is_current_probe(probe_id)
+    return probe_id == state.active_probe_id
+end
+
+local function apply_probe_result(probe_id, mode)
+    if not is_current_probe(probe_id) then
+        return false
+    end
+
+    set_mode(mode)
+    return true
+end
+
+local schedule_probe
+
+local function run_probe(reason, opts)
+    opts = opts or {}
+
     if state.inflight then
         state.pending = true
+        state.pending_reason = reason or state.pending_reason
+        if opts.urgent then
+            state.pending_urgent = true
+        end
         return
     end
 
@@ -167,58 +206,133 @@ local function run_probe(reason)
     end
 
     state.inflight = true
-    local started_at = now_ms()
+    state.scheduled_reason = ""
+    state.scheduled_due_at_ms = 0
+
+    local started_at = now_ms_or_zero()
     state.probe_count = state.probe_count + 1
-    state.last_probe_at_ms = started_at or 0
+    state.last_probe_at_ms = started_at
     state.last_shellout_cmd = ""
 
-    -- Placeholder probe for task 2: real opencode discovery comes in a later task.
-    set_mode("inactive")
+    state.probe_id = state.probe_id + 1
+    local probe_id = state.probe_id
+    state.active_probe_id = probe_id
 
-    local ended_at = now_ms()
-    state.last_probe_ended_at_ms = ended_at or 0
-    if started_at and ended_at then
+    -- Placeholder probe for task 2: real opencode discovery comes in a later task.
+    apply_probe_result(probe_id, "inactive")
+
+    local ended_at = now_ms_or_zero()
+    state.last_probe_ended_at_ms = ended_at
+    if started_at > 0 and ended_at > 0 then
         state.last_probe_duration_ms = ended_at - started_at
     else
         state.last_probe_duration_ms = 0
     end
 
+    if is_current_probe(probe_id) then
+        state.last_completed_probe_id = probe_id
+    end
+
     state.inflight = false
 
     if state.pending then
+        local pending_reason = state.pending_reason ~= "" and state.pending_reason or (reason or "pending")
+        local pending_urgent = state.pending_urgent
         state.pending = false
-        run_probe(reason or "pending")
+        state.pending_reason = ""
+        state.pending_urgent = false
+        schedule_probe(pending_reason, { urgent = pending_urgent })
     end
 end
 
-local function schedule_initial_probe()
-    if is_headless() or is_windows() then
+schedule_probe = function(reason, opts)
+    opts = opts or {}
+
+    if state.inflight then
+        state.pending = true
+        state.pending_reason = reason or state.pending_reason
+        if opts.urgent then
+            state.pending_urgent = true
+        end
+        return
+    end
+
+    if is_headless() then
+        return
+    end
+
+    if is_windows() then
+        set_mode("inactive")
+        return
+    end
+
+    local urgent = opts.urgent == true
+    local now = now_ms_or_zero()
+
+    local target_due_at_ms = now
+    if not urgent then
+        local extra_delay_ms = tonumber(opts.delay_ms) or 0
+        if extra_delay_ms < 0 then
+            extra_delay_ms = 0
+        end
+        target_due_at_ms = now + extra_delay_ms
+
+        local min_probe_ms = tonumber(config.min_probe_ms) or DEFAULTS.min_probe_ms
+        if min_probe_ms < 0 then
+            min_probe_ms = 0
+        end
+
+        if state.last_probe_at_ms > 0 then
+            local throttle_due_at_ms = state.last_probe_at_ms + min_probe_ms
+            if throttle_due_at_ms > target_due_at_ms then
+                target_due_at_ms = throttle_due_at_ms
+            end
+        end
+    end
+
+    if target_due_at_ms <= now then
+        run_probe(reason or "event", { urgent = urgent })
         return
     end
 
     if not uv or not uv.new_timer then
-        run_probe("initial")
+        run_probe(reason or "timer-fallback")
         return
     end
 
-    initial_probe_timer = initial_probe_timer or uv.new_timer()
-    if not initial_probe_timer then
-        run_probe("initial")
+    probe_timer = probe_timer or uv.new_timer()
+    if not probe_timer then
+        run_probe(reason or "timer-fallback")
         return
     end
 
-    initial_probe_timer:stop()
-    initial_probe_timer:start(
-        INITIAL_PROBE_DELAY_MS,
+    state.scheduled_reason = reason or "scheduled"
+    state.scheduled_due_at_ms = target_due_at_ms
+
+    local delay_ms = target_due_at_ms - now
+    if delay_ms < 0 then
+        delay_ms = 0
+    end
+
+    probe_timer:stop()
+    probe_timer:start(
+        delay_ms,
         0,
         v.schedule_wrap(function()
-            run_probe("initial")
+            local scheduled_reason = state.scheduled_reason ~= "" and state.scheduled_reason or "scheduled"
+            state.scheduled_reason = ""
+            state.scheduled_due_at_ms = 0
+            run_probe(scheduled_reason)
         end)
     )
 end
 
+local function schedule_initial_probe()
+    schedule_probe("initial", { delay_ms = INITIAL_PROBE_DELAY_MS })
+end
+
 function M.teardown()
-    initial_probe_timer = close_timer(initial_probe_timer)
+    probe_timer = close_timer(probe_timer)
     fallback_poll_timer = close_timer(fallback_poll_timer)
 
     if augroup_id then
@@ -239,6 +353,30 @@ function M.setup(opts)
         group = augroup_id,
         callback = function()
             M.teardown()
+        end,
+    })
+
+    v.api.nvim_create_autocmd({ "VimEnter", "FocusGained", "DirChanged" }, {
+        group = augroup_id,
+        callback = function(args)
+            local trigger = (args and args.event) or "ui-event"
+            schedule_probe(trigger)
+        end,
+    })
+
+    v.api.nvim_create_autocmd("User", {
+        group = augroup_id,
+        pattern = "OpencodeEvent:*",
+        callback = function(args)
+            local event_name = (args and args.match) or "OpencodeEvent:*"
+
+            if event_name == "OpencodeEvent:server.connected" or event_name == "OpencodeEvent:server.disconnected" then
+                state.last_urgent_event_at_ms = now_ms_or_zero()
+                schedule_probe(event_name, { urgent = true })
+                return
+            end
+
+            schedule_probe(event_name)
         end,
     })
 
