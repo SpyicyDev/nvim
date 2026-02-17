@@ -1,6 +1,8 @@
 return {
     {     -- also line wrapping
         "andrewferrier/wrapping.nvim",
-        opts = {},
+        opts = {
+            log_path = nil,
+        },
     },
 }
