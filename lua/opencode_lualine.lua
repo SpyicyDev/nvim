@@ -37,6 +37,10 @@ local COLOR_BY_MODE = {
 }
 
 local config = vim.deepcopy(DEFAULTS)
+
+local function reset_config()
+    config = vim.deepcopy(DEFAULTS)
+end
 local augroup_id
 local initial_probe_timer
 local fallback_poll_timer
@@ -223,11 +227,12 @@ function M.teardown()
     end
 
     reset_runtime_state()
+    reset_config()
 end
 
 function M.setup(opts)
     M.teardown()
-    config = vim.tbl_deep_extend("force", vim.deepcopy(DEFAULTS), opts or {})
+    config = vim.tbl_deep_extend("force", vim.deepcopy(config), opts or {})
 
     augroup_id = v.api.nvim_create_augroup("opencode_lualine", { clear = true })
     v.api.nvim_create_autocmd("VimLeavePre", {
