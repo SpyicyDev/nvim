@@ -282,6 +282,44 @@ local function parse_lsof_ports(stdout)
     return ports
 end
 
+local function parse_server_cwd(stdout)
+    local decoded_ok, path_data = pcall(v.fn.json_decode, stdout or "")
+    if not decoded_ok or type(path_data) ~= "table" then
+        return nil
+    end
+
+    local server_cwd = path_data.directory or path_data.worktree
+    if type(server_cwd) ~= "string" or server_cwd == "" then
+        return nil
+    end
+
+    return server_cwd
+end
+
+local function get_configured_port()
+    local port_key = "po" .. "rt"
+    local expr = string.format("get(get(g:, 'opencode_opts', {}), '%s', v:null)", port_key)
+    local ok, configured_port = pcall(
+        v.api.nvim_eval,
+        expr
+    )
+    if not ok then
+        return nil
+    end
+
+    local port = tonumber(configured_port)
+    if not port or port <= 0 then
+        return nil
+    end
+
+    port = math.floor(port)
+    if port <= 0 then
+        return nil
+    end
+
+    return port
+end
+
 local function is_descendant_of_nvim_async(probe_id, pid, cb)
     local neovim_pid = v.fn.getpid()
     local current_pid = pid
@@ -324,8 +362,7 @@ local function is_descendant_of_nvim_async(probe_id, pid, cb)
     step()
 end
 
-local function discover_mode_async(probe_id, cb)
-    local nvim_cwd = v.fn.getcwd()
+local function discover_mode_via_full_scan_async(probe_id, nvim_cwd, cb)
     local found_qualifying_server = false
     local pid_is_internal = {}
 
@@ -409,15 +446,8 @@ local function discover_mode_async(probe_id, cb)
                                     return
                                 end
 
-                                local decoded_ok, path_data = pcall(v.fn.json_decode, curl_res.stdout or "")
-                                if not decoded_ok or type(path_data) ~= "table" then
-                                    port_idx = port_idx + 1
-                                    process_next_port()
-                                    return
-                                end
-
-                                local server_cwd = path_data.directory or path_data.worktree
-                                if type(server_cwd) ~= "string" or server_cwd == "" then
+                                local server_cwd = parse_server_cwd(curl_res.stdout)
+                                if not server_cwd then
                                     port_idx = port_idx + 1
                                     process_next_port()
                                     return
@@ -465,6 +495,106 @@ local function discover_mode_async(probe_id, cb)
         end
 
         process_next_pid()
+    end)
+end
+
+local function discover_mode_via_configured_port_async(probe_id, nvim_cwd, cb)
+    local configured_port = get_configured_port()
+    if not configured_port then
+        cb(nil, nil, true)
+        return
+    end
+
+    run_system_command(
+        probe_id,
+        { "curl", "-s", "--connect-timeout", "1", "http://localhost:" .. configured_port .. "/path" },
+        function(curl_res)
+            if curl_res.code ~= 0 then
+                if is_missing_binary_error(curl_res) then
+                    cb(nil, format_system_error("curl", curl_res), false)
+                    return
+                end
+
+                cb(nil, nil, true)
+                return
+            end
+
+            local server_cwd = parse_server_cwd(curl_res.stdout)
+            if not server_cwd then
+                cb(nil, nil, true)
+                return
+            end
+
+            if server_cwd:find(nvim_cwd, 1, true) ~= 1 then
+                cb("inactive", nil, false)
+                return
+            end
+
+            run_system_command(
+                probe_id,
+                { "lsof", "-t", "-iTCP:" .. configured_port, "-sTCP:LISTEN" },
+                function(lsof_res)
+                    local lsof_status = check_system_call_result(lsof_res)
+                    if lsof_status ~= "ok" then
+                        cb("external", nil, false)
+                        return
+                    end
+
+                    local pids = parse_pid_lines(lsof_res.stdout)
+                    if #pids == 0 then
+                        cb("external", nil, false)
+                        return
+                    end
+
+                    local pid_idx = 1
+                    local function process_next_pid()
+                        if not is_current_probe(probe_id) then
+                            return
+                        end
+
+                        local pid = pids[pid_idx]
+                        if not pid then
+                            cb("external", nil, false)
+                            return
+                        end
+
+                        is_descendant_of_nvim_async(probe_id, pid, function(is_internal)
+                            if not is_current_probe(probe_id) then
+                                return
+                            end
+
+                            if is_internal then
+                                cb("internal", nil, false)
+                                return
+                            end
+
+                            pid_idx = pid_idx + 1
+                            process_next_pid()
+                        end)
+                    end
+
+                    process_next_pid()
+                end
+            )
+        end
+    )
+end
+
+local function discover_mode_async(probe_id, cb)
+    local nvim_cwd = v.fn.getcwd()
+
+    discover_mode_via_configured_port_async(probe_id, nvim_cwd, function(mode, err, should_fallback)
+        if err and err ~= "" then
+            cb(nil, err)
+            return
+        end
+
+        if should_fallback then
+            discover_mode_via_full_scan_async(probe_id, nvim_cwd, cb)
+            return
+        end
+
+        cb(mode)
     end)
 end
 
@@ -703,17 +833,11 @@ function M.setup(opts)
 
     v.api.nvim_create_autocmd("User", {
         group = augroup_id,
-        pattern = "OpencodeEvent:*",
+        pattern = { "OpencodeEvent:server.connected", "OpencodeEvent:server.disconnected" },
         callback = function(args)
-            local event_name = (args and args.match) or "OpencodeEvent:*"
-
-            if event_name == "OpencodeEvent:server.connected" or event_name == "OpencodeEvent:server.disconnected" then
-                state.last_urgent_event_at_ms = now_ms_or_zero()
-                schedule_probe(event_name, { urgent = true })
-                return
-            end
-
-            schedule_probe(event_name)
+            local event_name = (args and args.match) or "OpencodeEvent:server.connected"
+            state.last_urgent_event_at_ms = now_ms_or_zero()
+            schedule_probe(event_name, { urgent = true })
         end,
     })
 
