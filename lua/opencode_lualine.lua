@@ -193,6 +193,315 @@ end
 
 local schedule_probe
 
+local function format_cmd(cmd)
+    return table.concat(cmd, " ")
+end
+
+local function format_system_error(cmd_name, res)
+    local code = tonumber(res and res.code) or -1
+    local stderr = res and res.stderr or ""
+    return string.format("`%s` failed with code %d\n%s", cmd_name, code, stderr)
+end
+
+local function check_system_call_result(res)
+    local code = tonumber(res and res.code) or -1
+    local stderr = res and res.stderr or ""
+
+    if code == 0 then
+        return "ok"
+    end
+
+    if code == 1 and stderr == "" then
+        return "no_results"
+    end
+
+    return "hard_error"
+end
+
+local function is_missing_binary_error(res)
+    local code = tonumber(res and res.code) or -1
+    local stderr = (res and res.stderr or ""):lower()
+
+    if code == 127 then
+        return true
+    end
+
+    if stderr:find("not found", 1, true) then
+        return true
+    end
+
+    if stderr:find("no such file", 1, true) then
+        return true
+    end
+
+    return false
+end
+
+local function run_system_command(probe_id, cmd, cb)
+    if not is_current_probe(probe_id) then
+        return
+    end
+
+    state.last_shellout_cmd = format_cmd(cmd)
+    v.system(cmd, { text = true }, function(res)
+        if not is_current_probe(probe_id) then
+            return
+        end
+        cb(res)
+    end)
+end
+
+local function parse_pid_lines(stdout)
+    local pids = {}
+    for line in (stdout or ""):gmatch("[^\r\n]+") do
+        local pid = tonumber(line)
+        if pid then
+            table.insert(pids, pid)
+        end
+    end
+    return pids
+end
+
+local function parse_lsof_ports(stdout)
+    local ports = {}
+    local seen = {}
+
+    for line in (stdout or ""):gmatch("[^\r\n]+") do
+        local parts = vim.split(line, "%s+", { trimempty = true })
+        if parts[1] ~= "COMMAND" then
+            local port_str = parts[9] and parts[9]:match(":(%d+)$")
+            local port = tonumber(port_str)
+            if port and not seen[port] then
+                seen[port] = true
+                table.insert(ports, port)
+            end
+        end
+    end
+
+    return ports
+end
+
+local function is_descendant_of_nvim_async(probe_id, pid, cb)
+    local neovim_pid = v.fn.getpid()
+    local current_pid = pid
+    local steps = 0
+
+    local function step()
+        if not is_current_probe(probe_id) then
+            return
+        end
+
+        steps = steps + 1
+        if steps > 10 then
+            cb(false)
+            return
+        end
+
+        run_system_command(probe_id, { "ps", "-o", "ppid=", "-p", tostring(current_pid) }, function(res)
+            local status = check_system_call_result(res)
+            if status ~= "ok" then
+                cb(false)
+                return
+            end
+
+            local parent_pid = tonumber((res.stdout or ""):match("%d+"))
+            if not parent_pid or parent_pid == 1 then
+                cb(false)
+                return
+            end
+
+            if parent_pid == neovim_pid then
+                cb(true)
+                return
+            end
+
+            current_pid = parent_pid
+            step()
+        end)
+    end
+
+    step()
+end
+
+local function discover_mode_async(probe_id, cb)
+    local nvim_cwd = v.fn.getcwd()
+    local found_qualifying_server = false
+    local pid_is_internal = {}
+
+    run_system_command(probe_id, { "pgrep", "-f", "opencode.*--port" }, function(res)
+        local status = check_system_call_result(res)
+        if status == "hard_error" then
+            cb(nil, format_system_error("pgrep", res))
+            return
+        end
+
+        local pids = parse_pid_lines(res.stdout)
+        if status == "no_results" or #pids == 0 then
+            cb("inactive")
+            return
+        end
+
+        local pid_idx = 1
+        local function process_next_pid()
+            if not is_current_probe(probe_id) then
+                return
+            end
+
+            local pid = pids[pid_idx]
+            if not pid then
+                if found_qualifying_server then
+                    cb("external")
+                else
+                    cb("inactive")
+                end
+                return
+            end
+
+            run_system_command(
+                probe_id,
+                { "lsof", "-w", "-iTCP", "-sTCP:LISTEN", "-P", "-n", "-a", "-p", tostring(pid) },
+                function(lsof_res)
+                    local lsof_status = check_system_call_result(lsof_res)
+                    if lsof_status == "hard_error" then
+                        cb(nil, format_system_error("lsof", lsof_res))
+                        return
+                    end
+
+                    if lsof_status == "no_results" then
+                        pid_idx = pid_idx + 1
+                        process_next_pid()
+                        return
+                    end
+
+                    local ports = parse_lsof_ports(lsof_res.stdout)
+                    if #ports == 0 then
+                        pid_idx = pid_idx + 1
+                        process_next_pid()
+                        return
+                    end
+
+                    local port_idx = 1
+                    local function process_next_port()
+                        if not is_current_probe(probe_id) then
+                            return
+                        end
+
+                        local port = ports[port_idx]
+                        if not port then
+                            pid_idx = pid_idx + 1
+                            process_next_pid()
+                            return
+                        end
+
+                        run_system_command(
+                            probe_id,
+                            { "curl", "-s", "--connect-timeout", "1", "http://localhost:" .. port .. "/path" },
+                            function(curl_res)
+                                if curl_res.code ~= 0 then
+                                    if is_missing_binary_error(curl_res) then
+                                        cb(nil, format_system_error("curl", curl_res))
+                                        return
+                                    end
+
+                                    port_idx = port_idx + 1
+                                    process_next_port()
+                                    return
+                                end
+
+                                local decoded_ok, path_data = pcall(v.fn.json_decode, curl_res.stdout or "")
+                                if not decoded_ok or type(path_data) ~= "table" then
+                                    port_idx = port_idx + 1
+                                    process_next_port()
+                                    return
+                                end
+
+                                local server_cwd = path_data.directory or path_data.worktree
+                                if type(server_cwd) ~= "string" or server_cwd == "" then
+                                    port_idx = port_idx + 1
+                                    process_next_port()
+                                    return
+                                end
+
+                                if server_cwd:find(nvim_cwd, 1, true) ~= 1 then
+                                    port_idx = port_idx + 1
+                                    process_next_port()
+                                    return
+                                end
+
+                                found_qualifying_server = true
+                                if pid_is_internal[pid] ~= nil then
+                                    if pid_is_internal[pid] then
+                                        cb("internal")
+                                        return
+                                    end
+
+                                    port_idx = port_idx + 1
+                                    process_next_port()
+                                    return
+                                end
+
+                                is_descendant_of_nvim_async(probe_id, pid, function(is_internal)
+                                    pid_is_internal[pid] = is_internal
+                                    if not is_current_probe(probe_id) then
+                                        return
+                                    end
+
+                                    if is_internal then
+                                        cb("internal")
+                                        return
+                                    end
+
+                                    port_idx = port_idx + 1
+                                    process_next_port()
+                                end)
+                            end
+                        )
+                    end
+
+                    process_next_port()
+                end
+            )
+        end
+
+        process_next_pid()
+    end)
+end
+
+local function complete_probe(probe_id, started_at, reason, mode, err)
+    if not is_current_probe(probe_id) then
+        return
+    end
+
+    local ended_at = now_ms_or_zero()
+    state.last_probe_ended_at_ms = ended_at
+    if started_at > 0 and ended_at > 0 then
+        state.last_probe_duration_ms = ended_at - started_at
+    else
+        state.last_probe_duration_ms = 0
+    end
+
+    if err and err ~= "" then
+        state.last_error = err
+    else
+        state.last_error = ""
+        if mode then
+            apply_probe_result(probe_id, mode)
+        end
+    end
+
+    state.last_completed_probe_id = probe_id
+    state.inflight = false
+
+    if state.pending then
+        local pending_reason = state.pending_reason ~= "" and state.pending_reason or (reason or "pending")
+        local pending_urgent = state.pending_urgent
+        state.pending = false
+        state.pending_reason = ""
+        state.pending_urgent = false
+        schedule_probe(pending_reason, { urgent = pending_urgent })
+    end
+end
+
 local function run_probe(reason, opts)
     opts = opts or {}
 
@@ -226,31 +535,16 @@ local function run_probe(reason, opts)
     local probe_id = state.probe_id
     state.active_probe_id = probe_id
 
-    -- Placeholder probe for task 2: real opencode discovery comes in a later task.
-    apply_probe_result(probe_id, "inactive")
-
-    local ended_at = now_ms_or_zero()
-    state.last_probe_ended_at_ms = ended_at
-    if started_at > 0 and ended_at > 0 then
-        state.last_probe_duration_ms = ended_at - started_at
-    else
-        state.last_probe_duration_ms = 0
+    local done_called = false
+    local function done(mode, err)
+        if done_called then
+            return
+        end
+        done_called = true
+        complete_probe(probe_id, started_at, reason, mode, err)
     end
 
-    if is_current_probe(probe_id) then
-        state.last_completed_probe_id = probe_id
-    end
-
-    state.inflight = false
-
-    if state.pending then
-        local pending_reason = state.pending_reason ~= "" and state.pending_reason or (reason or "pending")
-        local pending_urgent = state.pending_urgent
-        state.pending = false
-        state.pending_reason = ""
-        state.pending_urgent = false
-        schedule_probe(pending_reason, { urgent = pending_urgent })
-    end
+    discover_mode_async(probe_id, done)
 end
 
 schedule_probe = function(reason, opts)
