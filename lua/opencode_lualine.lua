@@ -121,6 +121,15 @@ local function close_timer(timer)
     return nil
 end
 
+local function clear_scheduled_probe()
+    state.scheduled_reason = ""
+    state.scheduled_due_at_ms = 0
+
+    if probe_timer and not probe_timer:is_closing() then
+        probe_timer:stop()
+    end
+end
+
 local function count_open_timers()
     local open_count = 0
     if probe_timer and not probe_timer:is_closing() then
@@ -206,8 +215,7 @@ local function run_probe(reason, opts)
     end
 
     state.inflight = true
-    state.scheduled_reason = ""
-    state.scheduled_due_at_ms = 0
+    clear_scheduled_probe()
 
     local started_at = now_ms_or_zero()
     state.probe_count = state.probe_count + 1
@@ -291,6 +299,7 @@ schedule_probe = function(reason, opts)
     end
 
     if target_due_at_ms <= now then
+        clear_scheduled_probe()
         run_probe(reason or "event", { urgent = urgent })
         return
     end
