@@ -3,9 +3,6 @@ return {
     {
         "nvim-lualine/lualine.nvim",
         config = function()
-            local opencode_lualine = require("opencode_lualine")
-            opencode_lualine.setup()
-
             require('lualine').setup({
                 options = {
                     icons_enabled = true,
@@ -30,7 +27,6 @@ return {
                     lualine_b = { 'branch', 'diff', 'diagnostics' },
                     lualine_c = { 'filename' },
                     lualine_x = {
-                        require("opencode_lualine").component,
                         {
                             'copilot',
                             symbols = {
