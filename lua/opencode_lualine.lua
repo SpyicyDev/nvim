@@ -23,6 +23,7 @@ local DEFAULTS = {
 }
 
 local INITIAL_PROBE_DELAY_MS = 25
+local MIN_FALLBACK_POLL_S = 10
 
 local ICON_BY_MODE = {
     inactive = "󰅛",
@@ -634,6 +635,39 @@ local function schedule_initial_probe()
     schedule_probe("initial", { delay_ms = INITIAL_PROBE_DELAY_MS })
 end
 
+local function start_fallback_poll_timer()
+    if config.fallback_poll_enabled ~= true then
+        return
+    end
+
+    if is_headless() or is_windows() then
+        return
+    end
+
+    if not uv or not uv.new_timer then
+        return
+    end
+
+    local fallback_poll_s = tonumber(config.fallback_poll_s) or DEFAULTS.fallback_poll_s
+    if fallback_poll_s < MIN_FALLBACK_POLL_S then
+        fallback_poll_s = MIN_FALLBACK_POLL_S
+    end
+
+    local interval_ms = math.floor(fallback_poll_s * 1000)
+    fallback_poll_timer = uv.new_timer()
+    if not fallback_poll_timer then
+        return
+    end
+
+    fallback_poll_timer:start(
+        interval_ms,
+        interval_ms,
+        v.schedule_wrap(function()
+            schedule_probe("fallback-poll")
+        end)
+    )
+end
+
 function M.teardown()
     probe_timer = close_timer(probe_timer)
     fallback_poll_timer = close_timer(fallback_poll_timer)
@@ -683,6 +717,7 @@ function M.setup(opts)
         end,
     })
 
+    start_fallback_poll_timer()
     schedule_initial_probe()
 
     return M
