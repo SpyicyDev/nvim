@@ -35,7 +35,7 @@ return {
                 port = opencode_port,
                 provider = {
                     enabled = "snacks",
-                    cmd = "opencode --model openai/gpt-5.2-low",
+                    cmd = "opencode --agent sisyphus",
                     snacks = {
                         win = opencode_float_win(),
                     },
