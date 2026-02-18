@@ -28,14 +28,18 @@ return {
                 }
             end
 
-            local opencode_port = 30000 + (vim.fn.getpid() % 20000)
+            package.preload["lsp.opencode"] = function()
+                local path = vim.api.nvim_get_runtime_file("lsp/opencode.lua", false)[1]
+                if not path then
+                    error("lsp.opencode runtime file not found", 2)
+                end
+                return dofile(path)
+            end
 
-            ---@type opencode.Opts
             vim.g.opencode_opts = {
-                port = opencode_port,
                 provider = {
                     enabled = "snacks",
-                    cmd = "opencode --agent sisyphus",
+                    cmd = "opencode --port --model openai/gpt-5.2-low",
                     snacks = {
                         win = opencode_float_win(),
                     },
