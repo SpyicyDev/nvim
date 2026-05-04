@@ -2,7 +2,6 @@ return {
     {
         "numToStr/FTerm.nvim",
         keys = {
-            { "<A-d>", function() require("FTerm").toggle() end, mode = { "n", "t" }, desc = "Toggle terminal" },
             {
                 "<A-g>",
                 function()
