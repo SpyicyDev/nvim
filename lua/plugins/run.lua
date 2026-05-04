@@ -1,8 +1,10 @@
 return {
     {
         "spyicydev/run.nvim",
-        dependencies = {
-            "numToStr/FTerm.nvim",
+        event = "VeryLazy",
+        keys = {
+            { "<leader>rr", "<cmd>Run<cr>",     desc = "Run" },
+            { "<leader>rt", "<cmd>RunProj<cr>", desc = "Run project command" },
         },
         opts = {
             filetype = {
