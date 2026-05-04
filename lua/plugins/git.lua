@@ -1,6 +1,7 @@
 return {
     {
         "lewis6991/gitsigns.nvim",
+        event = { "BufReadPost", "BufNewFile" },
         opts = {
             current_line_blame = true,
             on_attach = function(bufnr)
@@ -48,6 +49,10 @@ return {
 
     {
         'ruifm/gitlinker.nvim',
+        keys = {
+            { "<leader>gy", mode = { "n", "v" }, desc = "Git link (yank)" },
+            { "<leader>gb", mode = { "n", "v" }, desc = "Git link (browse)" },
+        },
         dependencies = {
             'nvim-lua/plenary.nvim',
         },

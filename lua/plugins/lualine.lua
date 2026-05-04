@@ -2,12 +2,14 @@ return {
     -- statusline
     {
         "nvim-lualine/lualine.nvim",
+        event = "VeryLazy",
+        dependencies = { "catppuccin/nvim" },
         config = function()
-            require("opencode_lualine").setup()
+          -- require("opencode_lualine").setup()
             require('lualine').setup({
                 options = {
                     icons_enabled = true,
-                    theme = 'catppuccin',
+                    theme = 'catppuccin-mocha',
                     component_separators = { left = '', right = '' },
                     section_separators = { left = '', right = '' },
                     disabled_filetypes = {
@@ -28,7 +30,7 @@ return {
                     lualine_b = { 'branch', 'diff', 'diagnostics' },
                     lualine_c = { 'filename' },
                     lualine_x = {
-                        require("opencode_lualine").component,
+                        -- require("opencode_lualine").component,
                         {
                             'copilot',
                             symbols = {

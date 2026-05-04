@@ -1,6 +1,7 @@
 return {
     {
         "NickvanDyke/opencode.nvim",
+        event = "VeryLazy",
         dependencies = {
             -- Recommended for `ask()` and `select()`.
             -- Required for `snacks` provider.
@@ -28,18 +29,11 @@ return {
                 }
             end
 
-            package.preload["lsp.opencode"] = function()
-                local path = vim.api.nvim_get_runtime_file("lsp/opencode.lua", false)[1]
-                if not path then
-                    error("lsp.opencode runtime file not found", 2)
-                end
-                return dofile(path)
-            end
-
+            ---@type opencode.Opts
             vim.g.opencode_opts = {
                 provider = {
                     enabled = "snacks",
-                    cmd = "opencode --port --model openai/gpt-5.2-low",
+                    cmd = "opencode --agent sisyphus --port",
                     snacks = {
                         win = opencode_float_win(),
                     },
@@ -49,7 +43,9 @@ return {
                 },
             }
 
+            local opencode_group = vim.api.nvim_create_augroup("opencode_resize", { clear = true })
             vim.api.nvim_create_autocmd("VimResized", {
+                group = opencode_group,
                 callback = function()
                     local ok, cfg = pcall(require, "opencode.config")
                     if not ok then

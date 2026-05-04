@@ -1,4 +1,7 @@
 return {
     -- dot dot dot
-    "tpope/vim-repeat",
+    {
+        "tpope/vim-repeat",
+        event = "VeryLazy",
+    },
 }

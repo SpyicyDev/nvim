@@ -1,5 +1,8 @@
 return {
     -- databases
-    "tpope/vim-dadbod",
-    'kristijanhusak/vim-dadbod-ui',
+    {
+        'kristijanhusak/vim-dadbod-ui',
+        cmd = { "DB", "DBUI", "DBUIToggle", "DBUIAddConnection", "DBUIFindBuffer", "DBHistory" },
+        dependencies = { "tpope/vim-dadbod" },
+    },
 }

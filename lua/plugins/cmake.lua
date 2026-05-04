@@ -1,5 +1,6 @@
 return {
     "Civitasv/cmake-tools.nvim",
+    ft = { "cmake", "c", "cpp" },
     dependencies = {
         {
             "akinsho/toggleterm.nvim",

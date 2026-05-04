@@ -2,19 +2,21 @@ local M = {}
 
 function M.setup()
 -- diagnostic keybinds
-vim.keymap.set('n', 'gl', '<cmd>lua vim.diagnostic.open_float()<cr>')
-vim.keymap.set('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<cr>')
-vim.keymap.set('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<cr>')
+vim.keymap.set('n', 'gl', vim.diagnostic.open_float)
+vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1 }) end)
+vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1 }) end)
 
 -- diagnostic signs
-vim.fn.sign_define("DiagnosticSignError",
-    { text = " ", texthl = "DiagnosticSignError" })
-vim.fn.sign_define("DiagnosticSignWarn",
-    { text = " ", texthl = "DiagnosticSignWarn" })
-vim.fn.sign_define("DiagnosticSignInfo",
-    { text = " ", texthl = "DiagnosticSignInfo" })
-vim.fn.sign_define("DiagnosticSignHint",
-    { text = "", texthl = "DiagnosticSignHint" })
+vim.diagnostic.config({
+    signs = {
+        text = {
+            [vim.diagnostic.severity.ERROR] = " ",
+            [vim.diagnostic.severity.WARN]  = " ",
+            [vim.diagnostic.severity.INFO]  = " ",
+            [vim.diagnostic.severity.HINT]  = "",
+        },
+    },
+})
 
 -- LSP keybinds, sets when LSP attaches
 vim.api.nvim_create_autocmd('LspAttach', {
@@ -22,22 +24,27 @@ vim.api.nvim_create_autocmd('LspAttach', {
     callback = function(event)
         local opts = { buffer = event.buf }
 
-        vim.keymap.set('n', 'K', '<cmd>lua vim.lsp.buf.hover()<cr>', opts)
-        vim.keymap.set('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<cr>', opts)
-        vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<cr>', opts)
-        vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<cr>', opts)
-        vim.keymap.set('n', 'go', '<cmd>lua vim.lsp.buf.type_definition()<cr>', opts)
-        vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<cr>', opts)
-        vim.keymap.set('n', 'gh', '<cmd>lua vim.lsp.buf.signature_help()<cr>', opts)
+        vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+        vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+        vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+        vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+        vim.keymap.set('n', 'go', vim.lsp.buf.type_definition, opts)
+        vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+        vim.keymap.set('n', 'gh', vim.lsp.buf.signature_help, opts)
 
         vim.keymap.set('n', 'gn', ':IncRename ', opts)
-        vim.keymap.set({ 'n', 'x' }, 'gw', '<cmd>lua vim.lsp.buf.format({async = true})<cr>', opts)
+        vim.keymap.set({ 'n', 'x' }, 'gw', function() vim.lsp.buf.format({ async = true }) end, opts)
         vim.keymap.set('n', 'gc', require("actions-preview").code_actions, opts)
+
+        local client = vim.lsp.get_client_by_id(event.data.client_id)
+        if client and client:supports_method('textDocument/inlayHint') then
+            vim.lsp.inlay_hint.enable(true, { bufnr = event.buf })
+        end
     end
 })
 
 -- setup each LSP in mason
-local lsp_capabilities = require('cmp_nvim_lsp').default_capabilities()
+local lsp_capabilities = require('blink.cmp').get_lsp_capabilities()
 lsp_capabilities.textDocument.foldingRange = {
     dynamicRegistration = false,
     lineFoldingOnly = true
@@ -45,8 +52,7 @@ lsp_capabilities.textDocument.foldingRange = {
 -- enable codelens capability
 lsp_capabilities.textDocument.codeLens = { dynamicRegistration = true }
 
-local on_attach = function(client, bufnr)
-    -- require("lsp-inlayhints").on_attach(client, bufnr)
+local on_attach = function(_client, _bufnr)
 end
 
 local default_setup = function(server)
@@ -59,12 +65,26 @@ end
 local noop = function() end
 
 
-require('mason').setup({})
 require('mason-lspconfig').setup({
-    ensure_installed = {},
+    ensure_installed = { 'basedpyright' },
     handlers = {
         default_setup,
         ['jdtls'] = noop,
+        ['basedpyright'] = function(server)
+            vim.lsp.config(server, {
+                capabilities = lsp_capabilities,
+                on_attach = on_attach,
+                settings = {
+                    basedpyright = {
+                        analysis = {
+                            autoSearchPaths = true,
+                            useLibraryCodeForTypes = true,
+                            diagnosticMode = "openFilesOnly",
+                        },
+                    },
+                },
+            })
+        end,
     },
 })
 
@@ -74,24 +94,6 @@ vim.lsp.config('ocamllsp', {
     on_attach = on_attach,
 })
 vim.lsp.enable({"ocamllsp"})
-
-vim.lsp.config('pyright', {
-    capabilities = lsp_capabilities,
-    on_attach = on_attach,
-})
-vim.lsp.enable({"pyright"})
-
-
--- specific config for julia
-vim.lsp.config('julials', {
-    on_new_config = function(new_config, _)
-        local julia = vim.fn.expand("~/.julia/environments/nvim-lspconfig/bin/julia")
-        if vim.fs.find(julia)[1] then
-            new_config.cmd[1] = julia
-        end
-    end
-})
-vim.lsp.enable({"julials"})
 
 
 -- null-ls setup
@@ -106,111 +108,6 @@ null_ls.setup({
         null_ls.builtins.formatting.ocamlformat,
     }
 })
-
--- snippets i think?
-require("luasnip.loaders.from_vscode").lazy_load()
-
--- cmp setup
-local cmp = require('cmp')
-local luasnip = require('luasnip')
-
-local has_words_before = function()
-    local unpack = table.unpack
-    local line, col = unpack(vim.api.nvim_win_get_cursor(0))
-    return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
-end
-
-
-cmp.setup({
-    completion = {
-        completeopt = 'menu,menuone,noinsert'
-    },
-    sources = cmp.config.sources({
-        { name = 'path' },
-        { name = 'lazydev', group_index = 0 },
-        { name = 'nvim_lsp' },
-        { name = 'nvim_lua' },
-        { name = 'conjure' },
-        { name = 'buffer',  keyword_length = 3 },
-        { name = 'luasnip', keyword_length = 2 },
-        { name = 'copilot', max_item_count = 3 },
-    }),
-    ---@diagnostic disable-next-line: missing-fields
-    formatting = {
-        fields = { 'abbr', 'kind', 'menu' },
-        format = require('lspkind').cmp_format({
-            menu = {
-                --        nvim_lsp = "[LSP]",
-                --       conjure = "[Conjure]",
-            },
-            mode = 'symbol_text',
-            maxwidth = 50,         -- prevent the popup from showing more than provided characters
-            ellipsis_char = '...', -- when popup menu exceed maxwidth, the truncated part would show ellipsis_char instead
-            symbol_map = { Copilot = "", },
-        })
-    },
-    mapping = cmp.mapping.preset.insert({
-        ["<Tab>"] = cmp.mapping(function(fallback)
-            if cmp.visible() and has_words_before() then
-                cmp.select_next_item()
-            elseif luasnip.expand_or_jumpable() then
-                luasnip.expand_or_jump()
-            elseif has_words_before() then
-                cmp.complete()
-            else
-                fallback()
-            end
-        end, { "i", "s" }),
-
-        ["<S-Tab>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-                cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
-                luasnip.jump(-1)
-            else
-                fallback()
-            end
-        end, { "i", "s" }),
-
-        ["<CR>"] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-                cmp.confirm({ select = false })
-            else
-                fallback()
-            end
-        end, { "i", "s" }),
-
-        ['<C-e>'] = cmp.mapping({
-            i = function(fallback)
-                if cmp.visible() then
-                    cmp.close()
-                else
-                    cmp.complete()
-                end
-            end,
-            c = function(fallback)
-                if cmp.visible() then
-                    cmp.close()
-                else
-                    cmp.complete()
-                end
-            end,
-        }),
-
-        ['<C-y>'] = cmp.mapping.confirm({ select = true }),
-    }),
-    window = {
-        completion = cmp.config.window.bordered({ border = 'single' }),
-        documentation = cmp.config.window.bordered({ border = 'single' }),
-    },
-    snippet = {
-        expand = function(args)
-            require('luasnip').lsp_expand(args.body)
-        end,
-    },
-})
-
-vim.api.nvim_set_hl(0, "CmpItemKindSupermaven", {fg ="#6CC644"})
 
 end
 

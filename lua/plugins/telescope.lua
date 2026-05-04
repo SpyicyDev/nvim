@@ -2,21 +2,20 @@ return {
     -- fuzzy finder
     {
         'nvim-telescope/telescope.nvim',
+        cmd = "Telescope",
+        keys = {
+            { "<leader>ff", "<cmd>Telescope find_files<cr>",   desc = "Find files" },
+            { "<leader>fg", "<cmd>Telescope live_grep<cr>",    desc = "Live grep" },
+            { "<leader>fm", "<cmd>Telescope grapple tags<cr>", desc = "Grapple tags" },
+            { "<leader>ft", "<cmd>TodoTelescope<cr>",          desc = "Todo" },
+            { "<leader>fk", "<cmd>Telescope keymaps<cr>",      desc = "Keymaps" },
+            { "<leader>fl", "<cmd>Telescope help_tags<cr>",    desc = "Help" },
+            { "<leader>fb", "<cmd>Telescope file_browser<cr>", desc = "File browser" },
+        },
         config = function()
-            local builtin = require('telescope.builtin')
-            vim.keymap.set('n', '<leader>ff', builtin.find_files, {})
-            vim.keymap.set('n', '<leader>fr', '<Cmd>Telescope frecency<CR>', {})
-            vim.keymap.set('n', '<leader>fg', builtin.live_grep, {})
-            vim.keymap.set('n', '<leader>fm', '<cmd>Telescope grapple tags<cr>', {})
-            vim.keymap.set('n', '<leader>ft', "<cmd>TodoTelescope<CR>")
-            vim.keymap.set('n', '<leader>fk', builtin.keymaps, {})
-            vim.keymap.set('n', '<leader>fl', builtin.help_tags, {})
-
-            vim.keymap.set('n', '<leader>fb', require('telescope').extensions.file_browser.file_browser)
-
             require('telescope').load_extension('fzf')
-            require("telescope").load_extension('grapple')
-            require("telescope").load_extension "file_browser"
+            require('telescope').load_extension('grapple')
+            require('telescope').load_extension('file_browser')
         end,
 
         dependencies = {
@@ -25,10 +24,4 @@ return {
             { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make' },
         },
     },
-    -- {
-    --     "nvim-telescope/telescope-frecency.nvim",
-    --     config = function()
-    --         require("telescope").load_extension "frecency"
-    --     end,
-    -- },
 }

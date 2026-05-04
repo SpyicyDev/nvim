@@ -3,6 +3,13 @@ return {
         "catppuccin/nvim",
         name = "catppuccin",
         priority = 1000,
+        config = function(_, opts)
+            require("catppuccin").setup(opts)
+            local ok = pcall(vim.cmd.colorscheme, "catppuccin-mocha")
+            if not ok then
+                vim.cmd.colorscheme("habamax")
+            end
+        end,
         opts = {
             integrations = {
                 noice = true,

@@ -1,11 +1,16 @@
+vim.loader.enable()
+
 -- import keymaps and general settings
 require('keymaps')
 require('set')
 
+-- disable unused language providers (saves ~10-50ms each at startup)
+vim.g.loaded_perl_provider = 0
+vim.g.loaded_ruby_provider = 0
+
 -- bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-local uv = vim.uv or vim.loop
-if not uv.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
     vim.fn.system({
         "git",
         "clone",
@@ -20,15 +25,19 @@ require("lazy").setup("plugins", {
     dev = {
         path = "~/projects/nvim_dev",
     },
+    performance = {
+        rtp = {
+            disabled_plugins = {
+                "gzip",
+                "netrwPlugin",
+                "tarPlugin",
+                "tohtml",
+                "tutor",
+                "zipPlugin",
+            },
+        },
+    },
 })
-
-vim.loader.enable()
-
--- set colorscheme
-local ok = pcall(vim.cmd.colorscheme, "catppuccin-mocha")
-if not ok then
-    vim.cmd.colorscheme("habamax")
-end
 
 vim.filetype.add({
     extension = {
