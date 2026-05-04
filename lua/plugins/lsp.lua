@@ -43,7 +43,6 @@ return {
             'L3MON4D3/LuaSnip',
             'folke/lazydev.nvim',
             'fang2hou/blink-copilot',
-            'PaterJason/cmp-conjure',
             'saghen/blink.compat',
         },
         ---@module 'blink.cmp'

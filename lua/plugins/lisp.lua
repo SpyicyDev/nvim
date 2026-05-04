@@ -2,7 +2,7 @@ return {
     {
         "Olical/conjure",
         -- [Optional] cmp-conjure for cmp
-        ft = { "fennel", "lua" },
+        ft = { "fennel" },
         dependencies = {
             {
                 "PaterJason/cmp-conjure",
@@ -13,11 +13,9 @@ return {
             require("conjure.mapping")["on-filetype"]()
         end,
         init = function()
-            vim.g['conjure#filetypes'] = {"fennel", "lua"}
+            vim.g['conjure#filetypes'] = {"fennel"}
 
             vim.g['conjure#client#fennel#aniseed#mapping#reset_repl'] = "rs"
-            vim.g['conjure#client#lua#neovim#mapping#reset_env'] = "rs"
-            -- Set configuration options here
         end,
     },
     "gpanders/nvim-parinfer",
