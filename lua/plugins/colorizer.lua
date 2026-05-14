@@ -13,7 +13,7 @@ return {
                 css = false,
                 css_fn = false,
                 tailwind = true,
-                mode = "background",
+                mode = "virtualtext",
             },
         },
     },
