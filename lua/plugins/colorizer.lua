@@ -14,6 +14,8 @@ return {
                 css_fn = false,
                 tailwind = true,
                 mode = "virtualtext",
+                virtualtext = "■",
+                virtualtext_inline = "after",
             },
         },
     },
